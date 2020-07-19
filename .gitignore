@@ -17,6 +17,8 @@ decaf/
 submission/
 cfg/
 darknet
+libdarknet.*
+
 .fuse*
 
 # CMake build #
