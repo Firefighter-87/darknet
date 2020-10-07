@@ -44,7 +44,7 @@ int size_network(network *net)
     int count = 0;
     for(i = 0; i < net->n; ++i){
         layer l = net->layers[i];
-        if(l.type == YOLO || l.type == REGION || l.type == DETECTION){
+        if(l.type == YOLO || l.type == YOLO4 || l.type == REGION || l.type == DETECTION){
             count += l.outputs;
         }
     }
@@ -57,7 +57,7 @@ void remember_network(network *net)
     int count = 0;
     for(i = 0; i < net->n; ++i){
         layer l = net->layers[i];
-        if(l.type == YOLO || l.type == REGION || l.type == DETECTION){
+        if(l.type == YOLO || l.type == YOLO4 || l.type == REGION || l.type == DETECTION){
             memcpy(predictions[demo_index] + count, net->layers[i].output, sizeof(float) * l.outputs);
             count += l.outputs;
         }
@@ -74,7 +74,7 @@ detection *avg_predictions(network *net, int *nboxes)
     }
     for(i = 0; i < net->n; ++i){
         layer l = net->layers[i];
-        if(l.type == YOLO || l.type == REGION || l.type == DETECTION){
+        if(l.type == YOLO || l.type == YOLO4 || l.type == REGION || l.type == DETECTION){
             memcpy(l.output, avg + count, sizeof(float) * l.outputs);
             count += l.outputs;
         }
@@ -92,36 +92,10 @@ void *detect_in_thread(void *ptr)
     float *X = buff_letter[(buff_index+2)%3].data;
     network_predict(net, X);
 
-    /*
-       if(l.type == DETECTION){
-       get_detection_boxes(l, 1, 1, demo_thresh, probs, boxes, 0);
-       } else */
     remember_network(net);
     detection *dets = 0;
     int nboxes = 0;
     dets = avg_predictions(net, &nboxes);
-
-
-    /*
-       int i,j;
-       box zero = {0};
-       int classes = l.classes;
-       for(i = 0; i < demo_detections; ++i){
-       avg[i].objectness = 0;
-       avg[i].bbox = zero;
-       memset(avg[i].prob, 0, classes*sizeof(float));
-       for(j = 0; j < demo_frame; ++j){
-       axpy_cpu(classes, 1./demo_frame, dets[j][i].prob, 1, avg[i].prob, 1);
-       avg[i].objectness += dets[j][i].objectness * 1./demo_frame;
-       avg[i].bbox.x += dets[j][i].bbox.x * 1./demo_frame;
-       avg[i].bbox.y += dets[j][i].bbox.y * 1./demo_frame;
-       avg[i].bbox.w += dets[j][i].bbox.w * 1./demo_frame;
-       avg[i].bbox.h += dets[j][i].bbox.h * 1./demo_frame;
-       }
-    //copy_cpu(classes, dets[0][i].prob, 1, avg[i].prob, 1);
-    //avg[i].objectness = dets[0][i].objectness;
-    }
-     */
 
     if (nms > 0) do_nms_obj(dets, nboxes, l.classes, nms);
 
@@ -131,7 +105,19 @@ void *detect_in_thread(void *ptr)
     //printf("\nFPS:%.1f\n",fps);
     //printf("Objects:\n\n");
     image display = buff[(buff_index+2) % 3];
+    // TODO: ADD YOLO4
     draw_detections(display, dets, nboxes, demo_thresh, demo_names, demo_alphabet, demo_classes, fps);
+    /*
+    if (l.type == DETECTION || l.type == REGION || l.type == YOLO) {
+        //void draw_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes, float fps)
+        draw_detections(display, dets, nboxes, demo_thresh, demo_names, demo_alphabet, demo_classes, fps);
+    }
+    if (l.type == YOLO4) {
+
+        //void draw_detections_y4(image im, int num, float thresh, box *boxes, float **probs, char **names, image **alphabet, int classes)
+        draw_detections_y4(display, nboxes, demo_thresh, , , demo_names, demo_alphabet, demo_classes);
+    }
+    */
     free_detections(dets, nboxes);
 
     demo_index = (demo_index + 1)%demo_frame;

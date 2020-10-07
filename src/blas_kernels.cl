@@ -3,51 +3,16 @@
 
 static const char* const blas_kernel_source = CONVERT_KERNEL_TO_STRING(
 
-__kernel void test_kernel(int N, __global float *input, __global float *output, __global float *expected)
-{
-    int index = (get_group_id(0) + get_group_id(1)*get_num_groups(0)) * get_local_size(0) + get_local_id(0);
-
-    if (index >= N) return;
-
-    output[index] = sqrt(input[index]);
-
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = log(input[index]);
-
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = pow(input[index], output[index-2]);
-
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = -exp(input[index]);
-
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = fabs(input[index]);
-
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = sin(input[index]);
-
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = cos(input[index]);
-}
-
-
+/*
 static void atomicAdd(volatile __global float *a, float v) {
-    /*
-    float s = v;
-    float n = 0;
-    float o = 0;
-    do {
-        n = s + atom_xchg(a, o);
-        s = o + atom_xchg(a, n);
-    }
-    while (s != o);
-    */
+    //float s = v;
+    //float n = 0;
+    //float o = 0;
+    //do {
+    //    n = s + atom_xchg(a, o);
+    //    s = o + atom_xchg(a, n);
+    //}
+    //while (s != o);
     union {
         float f;
         unsigned int i;
@@ -63,7 +28,7 @@ static void atomicAdd(volatile __global float *a, float v) {
         n.f = o.f + v;
     } while (atom_cmpxchg((__global unsigned int *)a, o.i, n.i) != o.i);
 }
-
+*/
 
 __kernel void scale_bias_kernel(int N, __global float *output, __global float *biases, int batch, int n, int size)
 {
@@ -197,7 +162,7 @@ __kernel void mean_delta_kernel(int N, __global float *delta, __global float *va
         }
     }
 
-    mean_delta[i] *= (-1.f/sqrt(variance[i] + .00001f));
+    mean_delta[i] *= (-1.f/sqrt(variance[i] + .0001f));
 }
 
 
@@ -214,7 +179,7 @@ __kernel void variance_delta_kernel(int N, __global float *x, __global float *de
             variance_delta[i] += delta[index] * (x[index] - mean[i]);
         }
     }
-    variance_delta[i] *= -.5f * pow(variance[i] + .00001f, (float)(-3.f/2.f));
+    variance_delta[i] *= -.5f * pow(variance[i] + .0001f, (float)(-3.f/2.f));
 }
 
 
@@ -791,8 +756,10 @@ __kernel void upsample_kernel(int N, __global float *x, int w, int h, int c, int
 
     int in_index = b*w*h*c + in_c*w*h + in_h*w + in_w;
 
+    //if(forward) out[out_index] += scale * x[in_index];
+    //else atomicAdd(&x[in_index], scale * out[out_index]);
     if(forward) out[out_index] += scale * x[in_index];
-    else atomicAdd(&x[in_index], scale * out[out_index]);
+    else x[in_index] += scale * out[out_index];
 }
 
 
@@ -847,6 +814,25 @@ __kernel void gemm_kernel(
             }
         }
     }
+}
+
+
+__kernel void scal_add_kernel(int N, float ALPHA, float BETA, __global float *X, int OFFX, int INCX)
+{
+    int i = (get_group_id(0) + get_group_id(1)*get_num_groups(0)) * get_local_size(0) + get_local_id(0);
+    if (i < N) {
+        X[i*INCX + OFFX] *= ALPHA;
+        X[i*INCX + OFFX] += BETA;
+    }
+}
+
+__kernel void mean_array_kernel(int N, float alpha, __global float *s, __global float *a)
+{
+    int i = (get_group_id(0) + get_group_id(1)*get_num_groups(0)) * get_local_size(0) + get_local_id(0);
+    if (i >= N) return;
+    a[i] *= (1 - alpha) + s[i];
+    a[i] *= alpha;
+    s[i] = a[i];
 }
 
 );

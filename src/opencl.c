@@ -2,8 +2,6 @@
 
 #define DARKNET_VERBOSE_GPU
 //#define DEBUG_KERNELS
-//#define DARKNET_TEST_CPU_AND_GPU
-//#define UNIT_TESTS
 
 #include "opencl.h"
 #include <unistd.h>
@@ -11,7 +9,7 @@
 
 #ifndef GPU_INDEX
 #define GPU_INDEX
-int gpu_index = -1;
+int gpu_index = 1;
 #endif
 
 #include <stdlib.h>
@@ -126,212 +124,12 @@ const char* clGetErrorString(int errorCode) {
 }
 
 const char* clCheckError(int errorCode) {
-    return clGetErrorString(errorCode);
+    const char* error = clGetErrorString(errorCode);
+    printf("FATAL ERROR: %s\n", error);
+    //exit(-1);
+    //assert(0);
+    return error;
 }
-
-#ifdef UNIT_TESTS
-void kernel_normalize_test() {
-    srand(time(0));
-
-    int i;
-
-    int batch=3;
-    int filters=5;
-    int spatial=7;
-
-    int n = batch*filters*spatial;
-
-    float *x = calloc(n, sizeof(float));
-    float *mean = calloc(n, sizeof(float));
-    float *variance = calloc(n, sizeof(float));
-
-    float *x_g = calloc(n, sizeof(float));
-    float *mean_g = calloc(n, sizeof(float));
-    float *variance_g = calloc(n, sizeof(float));
-
-    float scale = 1.f/sqrt(n);
-
-    for(i = 0; i < n; ++i) x[i] = fabsf(scale*rand_normal());
-    for(i = 0; i < n; ++i) mean[i] = fabsf(scale*rand_normal());
-    for(i = 0; i < n; ++i) variance[i] = fabsf(scale*rand_normal());
-
-    memcpy(x_g, x, n*sizeof(float));
-    memcpy(mean_g, mean, n*sizeof(float));
-    memcpy(variance_g, variance, n*sizeof(float));
-
-    cl_mem_ext x_gpu = opencl_make_array(x_g, n);
-    cl_mem_ext mean_gpu = opencl_make_array(mean_g, n);
-    cl_mem_ext variance_gpu = opencl_make_array(variance_g, n);
-
-    normalize_cpu(x, mean, variance, batch, filters, spatial);
-    printf("\n");
-    normalize_gpu(x_gpu, mean_gpu, variance_gpu, batch, filters, spatial);
-    printf("\n");
-
-    opencl_pull_array(x_gpu, x_g, n);
-    opencl_pull_array(mean_gpu, mean_g, n);
-    opencl_pull_array(variance_gpu, variance_g, n);
-
-    for(i = 0; i < n; ++i) assert(x[i] == x_g[i]);
-    for(i = 0; i < n; ++i) assert(mean[i] == mean_g[i]);
-    for(i = 0; i < n; ++i) assert(variance[i] == variance_g[i]);
-
-    printf("kernel_normalize_test PASS\n");
-}
-
-void opencl_kernel_unit_tests() {
-    kernel_normalize_test();
-}
-#endif
-
-#ifdef DARKNET_TEST_CPU_AND_GPU
-void opencl_cpu_gpu_test()
-{
-    sleep(1);
-
-    int N = 1;
-    int s = 7;
-
-    float* input = (float*)calloc(s, sizeof(float));
-    float* output = (float*)calloc(s, sizeof(float));
-    float* expected = (float*)calloc(s, sizeof(float));
-
-    ///*
-    input[0] = 2.f;
-    output[0] = 0;
-    expected[0] = 1.4142135381698608398438f;
-    expected[1] = 0.3465735614299774169922f;
-    expected[2] = 0.2234459370374679565430f;
-    expected[3] = -1.2503780126571655273438f;
-    expected[4] = 1.2503780126571655273438f;
-    expected[5] = 0.9491037726402282714844f;
-    expected[6] = 0.5824118852615356445312f;
-    //*/
-
-    /*
-    input[0] = 5.f;
-    output[0] = 0;
-    expected[0] = 2.2360680103302001953125f;
-    expected[1] = 0.8047189712524414062500f;
-    expected[2] = 0.6151968240737915039062f;
-    expected[3] = -1.8500206470489501953125f;
-    expected[4] = 1.8500206470489501953125f;
-    expected[5] = 0.9612694978713989257812f;
-    expected[6] = 0.5724795460700988769531f;
-    */
-
-    cl_mem_ext input_gpu = opencl_make_array(input, s);
-    cl_mem_ext output_gpu = opencl_make_array(output, s);
-    cl_mem_ext expected_gpu = opencl_make_array(expected, s);
-
-    printf("\n");
-
-    printf("TEST CPU:\n");
-    int index = 0;
-    output[index] = sqrtf(input[index]);
-    printf("sqrt(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = logf(input[index]);
-    printf("log(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = powf(input[index], output[index-2]);
-    printf("pow(%.22f, %.22f) = %.22f", input[index], output[index-2], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = -expf(input[index]);
-    printf("exp(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = fabsf(input[index]);
-    printf("fabs(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = sinf(input[index]);
-    printf("sin(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    input[index] = output[index-1];
-    output[index] = cosf(input[index]);
-    printf("cos(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    sleep(1);
-
-    printf("\n");
-
-    index = 0;
-    output[0] = 0;
-    output[1] = 0;
-    printf("TEST GPU:\n");
-    test_kernel_gpu(N, input_gpu, output_gpu, expected_gpu);
-    opencl_pull_array(input_gpu, input, s);
-    opencl_pull_array(output_gpu, output, s);
-    printf("sqrt(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    printf("log(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    printf("pow(%.22f, %.22f) = %.22f", input[index], output[index-2], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    printf("exp(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    printf("fabs(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    printf("sin(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    index += 1;
-    printf("cos(%.22f) = %.22f", input[index], output[index]);
-    printf(" %s\n", output[index] == expected[index] ? "PASS" : "FAIL");
-    sleep(1);
-
-    printf("\n");
-
-    opencl_free(input_gpu);
-    opencl_free(output_gpu);
-    opencl_free(expected_gpu);
-
-    // TODO: REMEMBER!
-    /*
-    int im = 7;
-    int jm = 3;
-    int km = 5;
-
-    printf("CPU\n");
-    int i,j,k;
-    for (k = 0; k < km; ++k) {
-        for (j = 0; j < jm; ++j) {
-            for (i = 0; i < im; ++i) {
-                int id = i + j*im + k*jm*im;
-                printf("%d %d %d (%d)\n", k, j, i, id);
-            }
-        }
-    }
-
-    printf("GPU\n");
-    int iN = im*jm*km;
-    int id;
-    for(id = 0; id < iN; ++id) {
-        k = (id / (jm*im));
-        j = (id % (jm*im) / im);
-        i = (id % im);
-        int index = i + j*im + k*jm*im;
-        printf("%d %d %d (%d)\n", k, j, i, index);
-    }
-    */
-
-    sleep(5);
-}
-#endif
 
 dim2 dim2_create(const int x, const int y)
 {
@@ -436,7 +234,7 @@ void opencl_load_buffer(const char *buffer, const size_t size, cl_program *outpu
         char *ebuffer = (char*)calloc(0x10000000, sizeof(char));
         clGetProgramBuildInfo(*output, opencl_devices[opencl_device_id_t], CL_PROGRAM_BUILD_LOG, 0x10000000 * sizeof(char), ebuffer, &len);
         printf("CL_PROGRAM_BUILD_LOG:\n%s\n", ebuffer);
-        printf("CODE:\n%s\n", buffer);
+        printf("CODE:\n%s\n", ebuffer);
         free(ebuffer);
         exit(-1);
     }
@@ -519,7 +317,7 @@ void opencl_load_buffer(const char *buffer, const size_t size, cl_program *outpu
         size_t len;
         char *cbuffer = (char*)calloc(0x10000000, sizeof(char));
         clGetProgramBuildInfo(*output, opencl_devices[opencl_device_id_t], CL_PROGRAM_BUILD_LOG, 0x10000000 * sizeof(char), cbuffer, &len);
-        printf("CL_PROGRAM_BUILD_LOG:\n%s\n", cbuffer);
+        printf("CL_PROGRAM_LINK_LOG:\n%s\n", cbuffer);
         free(cbuffer);
         exit(-1);
     }
@@ -602,7 +400,8 @@ void opencl_init(int *gpus, int ngpus) {
         opencl_device_id_t = d;
 
         opencl_queues[opencl_device_id_t] = clCreateCommandQueue(opencl_context,
-                                                                 opencl_devices[opencl_device_id_t], CL_FALSE, &clErr);
+                                                                 opencl_devices[opencl_device_id_t],
+                                                                 CL_FALSE, &clErr);
 
         if (clErr != CL_SUCCESS) {
             printf("opencl_init: Could not create queue.\n");
@@ -671,7 +470,6 @@ void opencl_deinit(int *gpus, int ngpus)
         opencl_device_id_t = a;
 
         clFinish(opencl_queues[opencl_device_id_t]);
-        gpu_index = -1;
 
         activation_kernel_release();
         blas_kernel_release();
@@ -699,6 +497,8 @@ void opencl_deinit(int *gpus, int ngpus)
     free(cl_native_double_width_s);
     free(cl_native_max_group_size_s);
     free(cl_native_address_bits_s);
+
+    gpu_index = -1;
 }
 
 void opencl_kernel(cl_kernel kernel, const dim2 globalItemSize, const int argc, ...)
@@ -716,6 +516,8 @@ void opencl_kernel(cl_kernel kernel, const dim2 globalItemSize, const int argc, 
     {
         argValue = va_arg(vl, void*);
         argSize = va_arg(vl, size_t);
+
+        assert(argValue);
 
         clErr = clSetKernelArg(kernel, j, argSize, argValue);
 
@@ -944,7 +746,8 @@ cl_mem_ext opencl_make_array(float *x, size_t n)
 
     cl_int clErr;
     buf.org = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
-                             buf.len * buf.obs, buf.ptr, &clErr);
+                             buf.len * buf.obs, buf.ptr,
+                             &clErr);
     if (clErr != CL_SUCCESS)
         printf("could create buffer on device. error: %s\n", clCheckError(clErr));
 
@@ -974,7 +777,8 @@ cl_mem_ext opencl_make_int_array(int *x, size_t n)
 
     cl_int clErr;
     buf.org = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
-                             buf.len * buf.obs, buf.ptr, &clErr);
+                             buf.len * buf.obs, buf.ptr,
+                             &clErr);
     if (clErr != CL_SUCCESS)
         printf("could create buffer on device. error: %s\n", clCheckError(clErr));
 
@@ -993,6 +797,7 @@ cl_mem_ext opencl_make_int_array(int *x, size_t n)
 
 void opencl_push_int_array(cl_mem_ext x_gpu, int *x, size_t n)
 {
+    assert(n == x_gpu.len && x && x_gpu.ptr && x && n);
 #ifdef BENCHMARK
     clock_t t;
     t = clock();
@@ -1023,6 +828,7 @@ void opencl_push_int_array(cl_mem_ext x_gpu, int *x, size_t n)
 
 void opencl_pull_int_array(cl_mem_ext x_gpu, int *x, size_t n)
 {
+    assert(n == x_gpu.len && x && x_gpu.ptr && x && n);
 #ifdef BENCHMARK
     clock_t t;
     t = clock();
@@ -1053,6 +859,7 @@ void opencl_pull_int_array(cl_mem_ext x_gpu, int *x, size_t n)
 
 void opencl_push_array(cl_mem_ext x_gpu, float *x, size_t n)
 {
+    assert(n == x_gpu.len && x && x_gpu.ptr && x && n);
 #ifdef BENCHMARK
     clock_t t;
     t = clock();
@@ -1083,6 +890,7 @@ void opencl_push_array(cl_mem_ext x_gpu, float *x, size_t n)
 
 void opencl_pull_array(cl_mem_ext x_gpu, float *x, size_t n)
 {
+    assert(n == x_gpu.len && x && x_gpu.ptr && x && n);
 #ifdef BENCHMARK
     clock_t t;
     t = clock();

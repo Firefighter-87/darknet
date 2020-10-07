@@ -126,13 +126,6 @@ void delta_yolo_class(float *output, float *delta, int index, int class, int cla
     }
 }
 
-static int entry_index(layer l, int batch, int location, int entry)
-{
-    int n =   location / (l.w*l.h);
-    int loc = location % (l.w*l.h);
-    return batch*l.outputs + n*l.w*l.h*(4+l.classes+1) + entry*l.w*l.h + loc;
-}
-
 void forward_yolo_layer(const layer l, network net)
 {
     int i,j,b,t,n;
@@ -239,6 +232,7 @@ void forward_yolo_layer(const layer l, network net)
             }
         }
     }
+
     l.cost[0] = pow(mag_array(l.delta, l.outputs * l.batch), 2);
 #if !defined(BENCHMARK) && !defined(LOSS_ONLY)
     printf("Region %d Avg IOU: %f, Class: %f, Obj: %f, No Obj: %f, .5R: %f, .75R: %f,  count: %d\n", net.index, avg_iou/count, avg_cat/class_count, avg_obj/count, avg_anyobj/(l.w*l.h*l.n*l.batch), recall/count, recall75/count, count);
@@ -353,6 +347,7 @@ int get_yolo_detections(layer l, int w, int h, int netw, int neth, float thresh,
 void forward_yolo_layer_gpu(const layer l, network net)
 {
     copy_gpu(l.batch*l.inputs, net.input_gpu, 1, l.output_gpu, 1);
+
     int b, n;
     for (b = 0; b < l.batch; ++b){
         for(n = 0; n < l.n; ++n){
@@ -369,6 +364,8 @@ void forward_yolo_layer_gpu(const layer l, network net)
 
     opencl_pull_array(l.output_gpu, net.input, l.batch*l.inputs);
     forward_yolo_layer(l, net);
+    //opencl_push_array(l.output_gpu, l.output, l.batch*l.outputs);
+    if(!net.train) return;
     opencl_push_array(l.delta_gpu, l.delta, l.batch*l.outputs);
 }
 

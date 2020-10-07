@@ -145,16 +145,12 @@ void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ng
     for(i = 0; i < ngpus; ++i){
         srand(seed);
 #ifdef GPU
-        if(gpu_index >= 0){
-            opencl_set_device(i);
-        }
+        opencl_set_device(i);
 #endif
         nets[i] = load_network(cfgfile, weightfile, clear);
-#ifdef GPU
-        nets[i]->gpu_index = i;
-#endif
         nets[i]->learning_rate *= ngpus;
     }
+
     network *net = nets[0];
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
 

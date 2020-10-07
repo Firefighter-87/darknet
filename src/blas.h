@@ -43,6 +43,8 @@ void softmax(float *input, int n, float temp, int stride, float *output);
 void softmax_cpu(float *input, int n, int batch, int batch_offset, int groups, int group_offset, int stride, float temp, float *output);
 void upsample_cpu(float *in, int w, int h, int c, int batch, int stride, int forward, float scale, float *out);
 
+void get_embedding(float *src, int src_w, int src_h, int src_c, int embedding_size, int cur_w, int cur_h, int cur_n, int cur_b, float *dst);
+
 #ifdef GPU
 #include "opencl.h"
 #include "tree.h"
@@ -55,7 +57,7 @@ void copy_gpu(int N, cl_mem_ext X, int INCX, cl_mem_ext Y, int INCY);
 void copy_offset_gpu(int N, cl_mem_ext X, int OFFX, int INCX, cl_mem_ext Y, int OFFY, int INCY);
 void add_gpu(int N, float ALPHA, cl_mem_ext X, int INCX);
 void supp_gpu(int N, float ALPHA, cl_mem_ext X, int INCX);
-void mask_gpu(int N, cl_mem_ext X, float mask_num, cl_mem_ext mask, float val);
+void mask_gpu(int N, cl_mem_ext X, float ALPHA, cl_mem_ext Y, float BETA);
 void scale_mask_gpu(int N, cl_mem_ext X, float mask_num, cl_mem_ext mask, float scale);
 void const_gpu(int N, float ALPHA, cl_mem_ext X, int INCX);
 void pow_gpu(int N, float ALPHA, cl_mem_ext X, int INCX, cl_mem_ext Y, int INCY);
@@ -110,6 +112,22 @@ void softmax_gpu(cl_mem_ext input, int n, int batch, int batch_offset, int group
 void softmax_tree_gpu(cl_mem_ext input, int spatial, int batch, int stride, float temp, cl_mem_ext output, tree hier);
 
 void upsample_gpu(cl_mem_ext in, int w, int h, int c, int batch, int stride, int forward, float scale, cl_mem_ext out);
+
+void mean_array_gpu(cl_mem_ext src, int size, float alpha, cl_mem_ext avg);
+
+int check_sim(size_t i, size_t j, contrastive_params *contrast_p, int contrast_p_size);
+float find_sim(size_t i, size_t j, contrastive_params *contrast_p, int contrast_p_size);
+float find_P_constrastive(size_t i, size_t j, contrastive_params *contrast_p, int contrast_p_size);
+float P_constrastive_f_det(size_t il, int *labels, float **z, unsigned int feature_size, float temperature, contrastive_params *contrast_p, int contrast_p_size);
+float P_constrastive_f(size_t i, size_t l, int *labels, float **z, unsigned int feature_size, float temperature, contrastive_params *contrast_p, int contrast_p_size);
+void grad_contrastive_loss_positive_f(size_t i, int *class_ids, int *labels, size_t num_of_samples, float **z, unsigned int feature_size, float temperature, float *delta, int wh, contrastive_params *contrast_p, int contrast_p_size);
+void grad_contrastive_loss_negative_f(size_t i, int *class_ids, int *labels, size_t num_of_samples, float **z, unsigned int feature_size, float temperature, float *delta, int wh, contrastive_params *contrast_p, int contrast_p_size, int neg_max);
+
+float math_vector_length(float *A, unsigned int feature_size);
+float cosine_similarity(float *A, float *B, unsigned int feature_size);
+float P_constrastive(size_t i, size_t l, int *labels, size_t num_of_samples, float **z, unsigned int feature_size, float temperature, float *cos_sim, float *exp_cos_sim);
+void grad_contrastive_loss_positive(size_t i, int *labels, size_t num_of_samples, float **z, unsigned int feature_size, float temperature, float *cos_sim, float *p_constrastive, float *delta, int wh);
+void grad_contrastive_loss_negative(size_t i, int *labels, size_t num_of_samples, float **z, unsigned int feature_size, float temperature, float *cos_sim, float *p_constrastive, float *delta, int wh);
 
 #endif
 #endif

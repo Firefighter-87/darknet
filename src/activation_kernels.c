@@ -17,19 +17,19 @@ void activation_kernel_init(void)
 	if (opencl_device_id_t == 0) {
 		opencl_activation_kernel_program = calloc(opencl_device_ct_t, sizeof(cl_program));
 		opencl_activate_array_kernel = calloc(opencl_device_ct_t, sizeof(cl_kernel));
-		opencl_gradient_array_kernel = calloc(opencl_device_ct_t, sizeof(cl_kernel));
+        opencl_gradient_array_kernel = calloc(opencl_device_ct_t, sizeof(cl_kernel));
 	}
 	opencl_load_buffer(activation_kernels_source, strlen(activation_kernels_source), &opencl_activation_kernel_program[opencl_device_id_t]);
 	opencl_create_kernel(&opencl_activation_kernel_program[opencl_device_id_t],
 		"activate_array_kernel", &opencl_activate_array_kernel[opencl_device_id_t]);
-	opencl_create_kernel(&opencl_activation_kernel_program[opencl_device_id_t],
-		"gradient_array_kernel", &opencl_gradient_array_kernel[opencl_device_id_t]);
+    opencl_create_kernel(&opencl_activation_kernel_program[opencl_device_id_t],
+        "gradient_array_kernel", &opencl_gradient_array_kernel[opencl_device_id_t]);
 }
 
 void activation_kernel_release(void)
 {
-	clReleaseKernel(opencl_activate_array_kernel[opencl_device_id_t]);
-	clReleaseKernel(opencl_gradient_array_kernel[opencl_device_id_t]);
+    clReleaseKernel(opencl_activate_array_kernel[opencl_device_id_t]);
+    clReleaseKernel(opencl_gradient_array_kernel[opencl_device_id_t]);
 	clReleaseProgram(opencl_activation_kernel_program[opencl_device_id_t]);
 
 	opencl_activate_array_kernel[opencl_device_id_t] = 0;
@@ -38,9 +38,9 @@ void activation_kernel_release(void)
 
 	if (opencl_device_id_t == opencl_device_ct_t-1) {
 		free(opencl_activation_kernel_program);
-		free(opencl_activate_array_kernel);
-		free(opencl_gradient_array_kernel);
-	}
+        free(opencl_activate_array_kernel);
+        free(opencl_gradient_array_kernel);
+    }
 }
 
 void activate_array_offset_gpu(cl_mem_ext x, int offset, int n, ACTIVATION a)

@@ -7,6 +7,7 @@
 extern void predict_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filename, int top);
 extern void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh, char *outfile, int fullscreen);
 extern void run_yolo(int argc, char **argv);
+extern void run_yolo4(int argc, char **argv);
 extern void run_detector(int argc, char **argv);
 extern void run_coco(int argc, char **argv);
 extern void run_captcha(int argc, char **argv);
@@ -410,17 +411,29 @@ int main(int argc, char **argv)
         fprintf(stderr, "usage: %s <function>\n", argv[0]);
         return 0;
     }
-    gpu_index = find_int_arg(argc, argv, "-i", 0);
-    if(find_arg(argc, argv, "-nogpu")) {
+    int ngpus = 0;
+    int *gpus = 0;
+    if(read_arg(argc, argv, "-nogpu")) {
+        ngpus = 0;
         gpu_index = -1;
     }
-    char *gpu_list = read_char_arg(argc, argv, "-gpus", *argv);
-    int ngpus;
-    int *gpus = read_intlist(gpu_list, &ngpus, gpu_index);
-
-    if (ngpus == 1 || gpu_index < 0) {
-        gpus[0] = gpu_index;
+    else if(read_arg(argc, argv, "-i")) {
+        gpus = calloc(1, sizeof(int));
+        gpus[0] = find_int_arg(argc, argv, "-i", 0);
+        ngpus = 1;
+        gpu_index = 1;
     }
+    else if(read_arg(argc, argv, "-gpus")) {
+        char *gpu_list = read_char_arg(argc, argv, "-gpus", *argv);
+        gpus = read_intlist(gpu_list, &ngpus, gpu_index);
+        gpu_index = ngpus;
+    }
+	else {
+        gpus = calloc(1, sizeof(int));
+        gpus[0] = 0;
+        ngpus = 1;
+        gpu_index = 1;
+	}
 
 #ifndef GPU
     gpu_index = -1;
@@ -428,7 +441,6 @@ int main(int argc, char **argv)
     if (gpu_index >= 0) {
         gpusg = gpus;
         ngpusg = ngpus;
-        gpu_index = gpus[0];
         opencl_init(gpus, ngpus);
     }
 #endif
@@ -437,6 +449,8 @@ int main(int argc, char **argv)
         average(argc, argv);
     } else if (0 == strcmp(argv[1], "yolo")){
         run_yolo(argc, argv);
+    } else if (0 == strcmp(argv[1], "yolo4")){
+        run_yolo4(argc, argv);
     } else if (0 == strcmp(argv[1], "super")){
         run_super(argc, argv);
     } else if (0 == strcmp(argv[1], "lsd")){
@@ -514,9 +528,9 @@ int main(int argc, char **argv)
     }
 #ifdef GPU
     if (gpu_index >= 0) {
-        opencl_deinit(gpus, ngpus);
+        opencl_deinit(gpusg, ngpusg);
     }
-    free(gpus);
+    free(gpusg);
 #endif
     return 0;
 }

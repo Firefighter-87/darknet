@@ -52,12 +52,12 @@ static float get_pixel(image m, int x, int y, int c)
 static float get_pixel_extend(image m, int x, int y, int c)
 {
     if(x < 0 || x >= m.w || y < 0 || y >= m.h) return 0;
-    /*
-    if(x < 0) x = 0;
-    if(x >= m.w) x = m.w-1;
-    if(y < 0) y = 0;
-    if(y >= m.h) y = m.h-1;
-    */
+
+    //if(x < 0) x = 0;
+    //if(x >= m.w) x = m.w-1;
+    //if(y < 0) y = 0;
+    //if(y >= m.h) y = m.h-1;
+
     if(c < 0 || c >= m.c) return 0;
     return get_pixel(m, x, y, c);
 }
@@ -73,7 +73,7 @@ static void add_pixel(image m, int x, int y, int c, float val)
     m.data[c*m.h*m.w + y*m.w + x] += val;
 }
 
-static float bilinear_interpolate(image im, float x, float y, int c)
+float bilinear_interpolate(image im, float x, float y, int c)
 {
     int ix = (int) floorf(x);
     int iy = (int) floorf(y);
@@ -236,15 +236,11 @@ image **load_alphabet()
     return alphabets;
 }
 
-pthread_mutex_t dd_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 void draw_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes, float fps)
 {
     int i,j;
     char percent[5];
     char lfps[5];
-
-    pthread_mutex_lock(&dd_mutex);
 
     for(i = 0; i < num; ++i) {
         char labelstr[4096] = {0};
@@ -270,12 +266,10 @@ void draw_detections(image im, detection *dets, int num, float thresh, char **na
 
             int width = im.h * .002;
 
-            /*
-               if(0){
-               width = pow(prob, 1./2.)*10+1;
-               alphabet = 0;
-               }
-             */
+            //if(0){
+            //width = pow(prob, 1./2.)*10+1;
+            //alphabet = 0;
+            //}
 
             //printf("%d %s: %.0f%%\n", i, names[class], prob*100);
             int offset = class * 123457 % classes;
@@ -333,11 +327,56 @@ void draw_detections(image im, detection *dets, int num, float thresh, char **na
             free_image(ilfps);
         }
     }
-
-    pthread_mutex_unlock(&dd_mutex);
 }
 
-void transpose_image(image im)
+void draw_detections_y4(image im, int num, float thresh, box *boxes, float **probs, char **names, image **alphabet, int classes)
+{
+    int i;
+
+    for(i = 0; i < num; ++i){
+        int class_id = max_index(probs[i], classes);
+        float prob = probs[i][class_id];
+        if(prob > thresh){
+            int width = im.h * .012;
+
+            if(0){
+                width = pow(prob, 1./2.)*10+1;
+                alphabet = 0;
+            }
+
+            int offset = class_id*123457 % classes;
+            float red = get_color(2,offset,classes);
+            float green = get_color(1,offset,classes);
+            float blue = get_color(0,offset,classes);
+            float rgb[3];
+
+            rgb[0] = red;
+            rgb[1] = green;
+            rgb[2] = blue;
+            box b = boxes[i];
+
+            int left  = (b.x-b.w/2.)*im.w;
+            int right = (b.x+b.w/2.)*im.w;
+            int top   = (b.y-b.h/2.)*im.h;
+            int bot   = (b.y+b.h/2.)*im.h;
+
+            if(left < 0) left = 0;
+            if(right > im.w-1) right = im.w-1;
+            if(top < 0) top = 0;
+            if(bot > im.h-1) bot = im.h-1;
+            printf("%s: %.0f%%", names[class_id], prob * 100);
+
+            printf("\n");
+            draw_box_width(im, left, top, right, bot, width, red, green, blue);
+            if (alphabet) {
+                image label = get_label(alphabet, names[class_id], (im.h*.03)/10);
+                draw_label(im, top + width, left, label, rgb);
+            }
+        }
+    }
+}
+
+void transpose_image_y4(image im)
 {
     assert(im.w == im.h);
     int n, m;
@@ -390,7 +429,7 @@ void flip_image(image a)
     }
 }
 
-image image_distance(image a, image b)
+image image_distance_y4(image a, image b)
 {
     int i,j;
     image dist = make_image(a.w, a.h, 1);
@@ -1456,7 +1495,6 @@ image resize_image(image im, int w, int h)
     free_image(part);
     return resized;
 }
-
 
 void test_resize(char *filename)
 {

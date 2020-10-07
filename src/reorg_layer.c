@@ -7,7 +7,7 @@
 
 layer make_reorg_layer(int batch, int w, int h, int c, int stride, int reverse, int flatten, int extra)
 {
-    layer l = {0};
+    layer l = { 0 };
     l.type = REORG;
     l.batch = batch;
     l.stride = stride;

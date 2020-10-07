@@ -9,6 +9,7 @@ ACTIVATION get_activation(char *s);
 char *get_activation_string(ACTIVATION a);
 float activate(float x, ACTIVATION a);
 float gradient(float x, ACTIVATION a);
+
 void gradient_array(const float *x, const int n, const ACTIVATION a, float *delta);
 void activate_array(float *x, const int n, const ACTIVATION a);
 #ifdef GPU
@@ -24,11 +25,12 @@ static inline float stair_activate(float x)
 	if (n%2 == 0) return floor(x/2.);
 	else return (x - n) + floor(x/2.);
 }
+
 static inline float hardtan_activate(float x)
 {
-	if (x < -1) return -1;
-	if (x > 1) return 1;
-	return x;
+    if (x < -1) return -1;
+    if (x > 1) return 1;
+    return x;
 }
 static inline float linear_activate(float x){return x;}
 static inline float logistic_activate(float x){return 1./(1. + expf(-x));}
@@ -45,6 +47,39 @@ static inline float plse_activate(float x)
 	if(x < -4) return .01 * (x + 4);
 	if(x > 4)  return .01 * (x - 4) + 1;
 	return .125*x + .5;
+}
+
+static inline float softplus(float x) {
+    float t = 27;
+    if (x >  t) return x;
+    if (x < -t) return expf(x);
+    return log1pf(expf(x));
+}
+
+static inline float mish_activate(float x) {
+    //https://arxiv.org/abs/1908.08681v1
+    // (𝑥) = 𝑥 ⋅ 𝑡𝑎𝑛h(𝜍(𝑥))
+    // 𝜍(𝑥) = ln(1 + 𝑒𝑥)
+    float c = softplus(x);
+    float a = x * tanhf(c);
+    return a;
+}
+
+static inline float mish_gradient(float x) {
+    //https://arxiv.org/abs/1908.08681v1
+    //𝑓’(𝑥) = ex ⋅ 𝜔 / 𝛿^2
+    //𝜔 = 4(𝑥+1)+4𝑒2𝑥 + 𝑒3𝑥 + 𝑒𝑥(4𝑥+6)
+    //𝛿 = 2𝑒2𝑥 + 𝑒2𝑥 + 2
+    //float d = 2 * expf(2*x) + expf(2*x) + 2;
+    //float w = 4 * (x+1) + 4*expf(2*x) + expf(3*x) + expf(x*(4*x+6));
+    //float g = expf(x) * w / powf(d,2);
+    //return g;
+    float sp = softplus(x);
+    float g_sp = -expm1f(-sp);
+    float tsp = tanhf(sp);
+    float g_tsp = (1 - tsp*tsp) * g_sp;
+    float g = x * g_tsp / tsp;
+    return g;
 }
 
 static inline float lhtan_activate(float x)

@@ -16,7 +16,6 @@
 
 cl_program* opencl_blas_kernel_program;
 
-cl_kernel* test_kernel;
 cl_kernel* softmax_device_kernel;
 cl_kernel* opencl_scale_bias_kernel;
 cl_kernel* opencl_backward_scale_kernel;
@@ -66,12 +65,13 @@ cl_kernel* opencl_scale_mask_kernel;
 cl_kernel* opencl_dot_kernel;
 cl_kernel* opencl_upsample_kernel;
 cl_kernel* opencl_gemm_kernel;
+cl_kernel* opencl_mean_array_kernel;
+cl_kernel* opencl_scal_add_kernel;
 
 void blas_kernel_init(void)
 {
     if (opencl_device_id_t == 0) {
         opencl_blas_kernel_program = calloc(opencl_device_ct_t, sizeof(cl_program));
-        test_kernel = calloc(opencl_device_ct_t, sizeof(cl_kernel));
         softmax_device_kernel = calloc(opencl_device_ct_t, sizeof(cl_kernel));
         opencl_scale_bias_kernel= calloc(opencl_device_ct_t, sizeof(cl_kernel));
         opencl_backward_scale_kernel= calloc(opencl_device_ct_t, sizeof(cl_kernel));
@@ -121,11 +121,12 @@ void blas_kernel_init(void)
         opencl_dot_kernel= calloc(opencl_device_ct_t, sizeof(cl_kernel));
         opencl_upsample_kernel= calloc(opencl_device_ct_t, sizeof(cl_kernel));
         opencl_gemm_kernel= calloc(opencl_device_ct_t, sizeof(cl_kernel));
+        opencl_mean_array_kernel= calloc(opencl_device_ct_t, sizeof(cl_kernel));
+        opencl_scal_add_kernel= calloc(opencl_device_ct_t, sizeof(cl_kernel));
     }
     
     opencl_load_buffer(blas_kernel_source, strlen(blas_kernel_source), &opencl_blas_kernel_program[opencl_device_id_t]);
 
-    opencl_create_kernel(&opencl_blas_kernel_program[opencl_device_id_t], "test_kernel", &test_kernel[opencl_device_id_t]);
     opencl_create_kernel(&opencl_blas_kernel_program[opencl_device_id_t], "softmax_device", &softmax_device_kernel[opencl_device_id_t]);
     opencl_create_kernel(&opencl_blas_kernel_program[opencl_device_id_t], "scale_bias_kernel", &opencl_scale_bias_kernel[opencl_device_id_t]);
     opencl_create_kernel(&opencl_blas_kernel_program[opencl_device_id_t], "backward_scale_kernel", &opencl_backward_scale_kernel[opencl_device_id_t]);
@@ -175,11 +176,12 @@ void blas_kernel_init(void)
     opencl_create_kernel(&opencl_blas_kernel_program[opencl_device_id_t], "dot_kernel", &opencl_dot_kernel[opencl_device_id_t]);
     opencl_create_kernel(&opencl_blas_kernel_program[opencl_device_id_t], "upsample_kernel", &opencl_upsample_kernel[opencl_device_id_t]);
     opencl_create_kernel(&opencl_blas_kernel_program[opencl_device_id_t], "gemm_kernel", &opencl_gemm_kernel[opencl_device_id_t]);
+    opencl_create_kernel(&opencl_blas_kernel_program[opencl_device_id_t], "mean_array_kernel", &opencl_mean_array_kernel[opencl_device_id_t]);
+    opencl_create_kernel(&opencl_blas_kernel_program[opencl_device_id_t], "scal_add_kernel", &opencl_scal_add_kernel[opencl_device_id_t]);
 }
 
 void blas_kernel_release(void)
 {
-    clReleaseKernel(test_kernel[opencl_device_id_t]); test_kernel[opencl_device_id_t] = 0;
     clReleaseKernel(softmax_device_kernel[opencl_device_id_t]); softmax_device_kernel[opencl_device_id_t] = 0;
     clReleaseKernel(opencl_scale_bias_kernel[opencl_device_id_t]); opencl_scale_bias_kernel[opencl_device_id_t] = 0;
     clReleaseKernel(opencl_backward_scale_kernel[opencl_device_id_t]); opencl_backward_scale_kernel[opencl_device_id_t] = 0;
@@ -229,12 +231,13 @@ void blas_kernel_release(void)
     clReleaseKernel(opencl_dot_kernel[opencl_device_id_t]); opencl_dot_kernel[opencl_device_id_t] = 0;
     clReleaseKernel(opencl_upsample_kernel[opencl_device_id_t]); opencl_upsample_kernel[opencl_device_id_t] = 0;
     clReleaseKernel(opencl_gemm_kernel[opencl_device_id_t]); opencl_gemm_kernel[opencl_device_id_t] = 0;
+    clReleaseKernel(opencl_mean_array_kernel[opencl_device_id_t]); opencl_mean_array_kernel[opencl_device_id_t] = 0;
+    clReleaseKernel(opencl_scal_add_kernel[opencl_device_id_t]); opencl_scal_add_kernel[opencl_device_id_t] = 0;
 
     clReleaseProgram(opencl_blas_kernel_program[opencl_device_id_t]); opencl_blas_kernel_program[opencl_device_id_t] = 0;
 
     if (opencl_device_id_t == opencl_device_ct_t-1) {
         free(opencl_blas_kernel_program);
-        free(test_kernel);
         free(softmax_device_kernel);
         free(opencl_scale_bias_kernel);
         free(opencl_backward_scale_kernel);
@@ -284,20 +287,9 @@ void blas_kernel_release(void)
         free(opencl_dot_kernel);
         free(opencl_upsample_kernel);
         free(opencl_gemm_kernel);
+        free(opencl_mean_array_kernel);
+        free(opencl_scal_add_kernel);
     }
-}
-
-void test_kernel_gpu(int N, cl_mem_ext input, cl_mem_ext output, cl_mem_ext expected)
-{
-    dim2 dimGrid;
-    dimGrid = dim2_create(N, 1);
-
-    opencl_kernel(test_kernel[opencl_device_id_t], dimGrid, 8,
-        &N, sizeof(cl_int),
-        &input.mem, sizeof(cl_mem),
-        &output.mem, sizeof(cl_mem),
-        &expected.mem, sizeof(cl_mem)
-    );
 }
 
 
@@ -313,7 +305,7 @@ void scale_bias_gpu(cl_mem_ext output, cl_mem_ext biases, int batch, int n, int 
 
 void backward_scale_gpu(cl_mem_ext x_norm, cl_mem_ext delta, int batch, int n, int size, cl_mem_ext scale_updates)
 {
-    int tuning = 16;
+    int tuning = (int)ceil(sqrt(n));
     dim2 dimGridG1;
     dimGridG1 = dim2_create(tuning, n);
     dim2 dimGridL1;
@@ -335,7 +327,7 @@ void add_bias_gpu(cl_mem_ext output, cl_mem_ext biases, int batch, int n, int si
 
 void backward_bias_gpu(cl_mem_ext bias_updates, cl_mem_ext delta, int batch, int n, int size)
 {
-    int tuning = 16;
+    int tuning = (int)ceil(sqrt(n));
     dim2 dimGridG1;
     dimGridG1 = dim2_create(tuning, n);
     dim2 dimGridL1;
@@ -422,7 +414,7 @@ void l2normalize_gpu(cl_mem_ext x, cl_mem_ext dx, int batch, int filters, int sp
 
 void fast_mean_gpu(cl_mem_ext x, int batch, int filters, int spatial, cl_mem_ext mean)
 {
-    int tuning = 16;
+    int tuning = (int)ceil(sqrt(filters));
     dim2 dimGridG1;
     dimGridG1 = dim2_create(tuning, filters);
     dim2 dimGridL1;
@@ -433,7 +425,7 @@ void fast_mean_gpu(cl_mem_ext x, int batch, int filters, int spatial, cl_mem_ext
 
 void fast_variance_gpu(cl_mem_ext x, cl_mem_ext mean, int batch, int filters, int spatial, cl_mem_ext variance)
 {
-    int tuning = 16;
+    int tuning = (int)ceil(sqrt(filters));
     dim2 dimGridG1;
     dimGridG1 = dim2_create(tuning, filters);
     dim2 dimGridL1;
@@ -444,7 +436,7 @@ void fast_variance_gpu(cl_mem_ext x, cl_mem_ext mean, int batch, int filters, in
 
 void fast_mean_delta_gpu(cl_mem_ext delta, cl_mem_ext variance, int batch, int filters, int spatial, cl_mem_ext mean_delta)
 {
-    int tuning = 16;
+    int tuning = (int)ceil(sqrt(filters));
     dim2 dimGridG1;
     dimGridG1 = dim2_create(tuning, filters);
     dim2 dimGridL1;
@@ -455,7 +447,7 @@ void fast_mean_delta_gpu(cl_mem_ext delta, cl_mem_ext variance, int batch, int f
 
 void fast_variance_delta_gpu(cl_mem_ext x, cl_mem_ext delta, cl_mem_ext mean, cl_mem_ext variance, int batch, int filters, int spatial, cl_mem_ext variance_delta)
 {
-    int tuning = 16;
+    int tuning = (int)ceil(sqrt(filters));
     dim2 dimGridG1;
     dimGridG1 = dim2_create(tuning, filters);
     dim2 dimGridL1;
@@ -634,7 +626,7 @@ void shortcut_gpu(int batch, int w1, int h1, int c1, cl_mem_ext add, int w2, int
     int size = batch * minw * minh * minc;
     dim2 dimGrid;
     dimGrid = opencl_gridsize(size);
-    opencl_kernel(opencl_shortcut_kernel[opencl_device_id_t], dimGrid, 34, &size, sizeof(cl_int), &minw, sizeof(cl_int), &minh, sizeof(cl_int), &minc, sizeof(cl_int), &stride, sizeof(cl_int), &sample, sizeof(cl_int), &batch, sizeof(cl_int), &w1, sizeof(cl_int), &h1, sizeof(cl_int), &c1, sizeof(cl_int), &add.mem, sizeof(cl_mem), &w2, sizeof(cl_int), &h2, sizeof(cl_int), &c2, sizeof(cl_int), &s1, sizeof(float), &s2, sizeof(float), &out.mem, sizeof(cl_mem));
+    opencl_kernel(opencl_shortcut_kernel[opencl_device_id_t], dimGrid, 34, &size, sizeof(cl_int), &minw, sizeof(cl_int), &minh, sizeof(cl_int), &minc, sizeof(cl_int), &stride, sizeof(cl_int), &sample, sizeof(cl_int), &batch, sizeof(cl_int), &w1, sizeof(cl_int), &h1, sizeof(cl_int), &c1, sizeof(cl_int), &add.mem, sizeof(cl_mem), &w2, sizeof(cl_int), &h2, sizeof(cl_int), &c2, sizeof(cl_int), &s1, sizeof(cl_float), &s2, sizeof(cl_float), &out.mem, sizeof(cl_mem));
 }
 
 
@@ -847,6 +839,39 @@ void upsample_gpu(cl_mem_ext in, int w, int h, int c, int batch, int stride, int
                   &forward, sizeof(cl_int),
                   &scale, sizeof(cl_float),
                   &out.mem, sizeof(cl_mem));
+}
+
+void mean_array_gpu(cl_mem_ext src, int N, float alpha, cl_mem_ext avg)
+{
+    dim2 dimBatch;
+    dimBatch = opencl_gridsize(N);
+
+    opencl_kernel(opencl_mean_array_kernel[opencl_device_id_t], dimBatch, 8,
+                  &N, sizeof(cl_int),
+                  &alpha, sizeof(cl_float),
+                  &src.mem, sizeof(cl_mem),
+                  &avg.mem, sizeof(cl_mem)
+    );
+}
+
+void scal_add_gpu(int N, float ALPHA, float BETA, cl_mem_ext X, int INCX)
+{
+    scal_add_offset_gpu(N, ALPHA, BETA, X, 0, INCX);
+}
+
+void scal_add_offset_gpu(int N, float ALPHA, float BETA, cl_mem_ext X, int OFFX, int INCX)
+{
+    dim2 dimBatch;
+    dimBatch = opencl_gridsize(N);
+
+    opencl_kernel(opencl_scal_add_kernel[opencl_device_id_t], dimBatch, 12,
+                  &N, sizeof(cl_int),
+                  &ALPHA, sizeof(cl_float),
+                  &BETA, sizeof(cl_float),
+                  &X.mem, sizeof(cl_mem),
+                  &OFFX, sizeof(cl_int),
+                  &INCX, sizeof(cl_int)
+    );
 }
 
 #if defined(GPU_MULTI) || defined(ARM)

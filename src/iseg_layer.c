@@ -155,7 +155,7 @@ void forward_iseg_layer(const layer l, network net)
         for(i = 0; i < 90; ++i){
             if(!l.counts[i]) continue;
             scal_cpu(ids, 1.f/l.counts[i], l.sums[i], 1);
-            if(b == 0 && net.gpu_index == 0){
+            if(b == 0 && net.gpui == 0){
                 printf("%4d, %6.3f, ", l.counts[i], mse[i]);
                 for(j = 0; j < ids; ++j){
                     printf("%6.3f,", l.sums[i][j]);

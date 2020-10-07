@@ -17,16 +17,12 @@ void train_regressor(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
     for(i = 0; i < ngpus; ++i){
         srand(seed);
 #ifdef GPU
-        if(gpu_index >= 0){
-            opencl_set_device(i);
-        }
+        opencl_set_device(i);
 #endif
         nets[i] = load_network(cfgfile, weightfile, clear);
-#ifdef GPU
-        nets[i]->gpu_index = i;
-#endif
         nets[i]->learning_rate *= ngpus;
     }
+
     srand(time(0));
     network *net = nets[0];
 

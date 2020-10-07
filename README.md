@@ -1,3 +1,9 @@
+# YOLO4 on OpenCL
+
+YOLO4 elements are supported, remember in CFG file to use [yolo4] instead of [yolo] to make it work!
+
+# YOLO1, YOLO2, YOLO3 on OpenCL
+
 [![OpenCL YOLO2 Training Multi-GPU-SET](https://iblog.isowa.io/wp-content/uploads/2020/07/gitbug-img.jpg)](https://www.youtube.com/watch?v=o-PV3vmfP-0)
 
 https://iblog.isowa.io/2020/07/02/the-multi-gpu-set-idea/

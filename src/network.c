@@ -8,6 +8,7 @@
 #include "convolutional_layer.h"
 #include "region_layer.h"
 #include "yolo_layer.h"
+#include "yolo4_layer.h"
 #include "normalization_layer.h"
 #include "maxpool_layer.h"
 #include "reorg_layer.h"
@@ -57,6 +58,7 @@ void reset_network_state(network *net, int b)
 	for (i = 0; i < net->n; ++i) {
 #ifdef GPU
 		if (gpu_index >= 0) {
+            opencl_set_device(net->gpui);
 			layer l = net->layers[i];
 			if (l.state_gpu.ptr) {
 				fill_offset_gpu(l.outputs, 0, l.state_gpu, l.outputs * b, 1);
@@ -76,34 +78,49 @@ void reset_rnn(network *net)
 
 float get_current_rate(network *net)
 {
-	size_t batch_num = get_current_batch(net);
-	int i;
-	float rate;
-	if (batch_num < net->burn_in) return net->learning_rate * pow((float)batch_num / net->burn_in, net->power);
-	switch (net->policy) {
-		case CONSTANT:
-			return net->learning_rate;
-		case STEP:
-			return net->learning_rate * pow(net->scale, batch_num/net->step);
-		case STEPS:
-			rate = net->learning_rate;
-			for(i = 0; i < net->num_steps; ++i){
-				if(net->steps[i] > batch_num) return rate;
-				rate *= net->scales[i];
-			}
-			return rate;
-		case EXP:
-			return net->learning_rate * pow(net->gamma, batch_num);
-		case POLY:
-			return net->learning_rate * pow(1 - (float)batch_num / net->max_batches, net->power);
-		case RANDOM:
-			return net->learning_rate * pow(rand_uniform(0,1), net->power);
-		case SIG:
-			return net->learning_rate * (1./(1.+exp(net->gamma*(batch_num - net->step))));
-		default:
-			fprintf(stderr, "Policy is weird!\n");
-			return net->learning_rate;
-	}
+    size_t batch_num = get_current_batch(net);
+    int i;
+    float rate;
+    if (batch_num < net->burn_in) return net->learning_rate * pow((float)batch_num / net->burn_in, net->power);
+    switch (net->policy) {
+        case CONSTANT:
+            return net->learning_rate;
+        case STEP:
+            return net->learning_rate * pow(net->scale, batch_num/net->step);
+        case STEPS:
+            rate = net->learning_rate;
+            for(i = 0; i < net->num_steps; ++i){
+                if(net->steps[i] > batch_num) return rate;
+                rate *= net->scales[i];
+            }
+            return rate;
+        case EXP:
+            return net->learning_rate * pow(net->gamma, batch_num);
+        case POLY:
+            return net->learning_rate * pow(1 - (float)batch_num / net->max_batches, net->power);
+        case RANDOM:
+            return net->learning_rate * pow(rand_uniform(0,1), net->power);
+        case SIG:
+            return net->learning_rate * (1./(1.+exp(net->gamma*(batch_num - net->step))));
+        case SGDR:
+        {
+            int last_iteration_start = 0;
+            int cycle_size = net->batches_per_cycle;
+            while ((last_iteration_start + cycle_size) < batch_num)
+            {
+                last_iteration_start += cycle_size;
+                cycle_size *= net->batches_cycle_mult;
+            }
+            rate = net->learning_rate_min +
+                   0.5*(net->learning_rate - net->learning_rate_min)
+                   * (1. + cos((float)(batch_num - last_iteration_start)*3.14159265 / cycle_size));
+
+            return rate;
+        }
+        default:
+            fprintf(stderr, "Policy is weird!\n");
+            return net->learning_rate;
+    }
 }
 
 char *get_layer_string(LAYER_TYPE a)
@@ -141,7 +158,9 @@ char *get_layer_string(LAYER_TYPE a)
 			return "region";
 		case YOLO:
 			return "yolo";
-		case DROPOUT:
+        case YOLO4:
+            return "yolo4";
+        case DROPOUT:
 			return "dropout";
 		case CROP:
 			return "crop";
@@ -169,6 +188,10 @@ network *make_network(int n)
 	net->seen = calloc(1, sizeof(size_t));
 	net->t    = calloc(1, sizeof(int));
 	net->cost = calloc(1, sizeof(float));
+    net->cur_iteration = (int*)calloc(1, sizeof(int));
+    net->total_bbox = (int*)calloc(1, sizeof(int));
+    net->rewritten_bbox = (int*)calloc(1, sizeof(int));
+    *net->rewritten_bbox = *net->total_bbox = 0;
 #ifdef GPU
 	if (gpu_index >= 0) {
         net->delta_gpu.ptr = NULL;
@@ -242,92 +265,11 @@ network *make_network(int n)
 	return net;
 }
 
-void clean_network_moves_gpu(network *net)
-{
-#ifdef GPU
-    //Clean ONLY by cln_mem_ext.cln() if *_gpu field calling inc, dec, add, rem function!
-    if (gpu_index >= 0) {
-        if (net->delta_gpu.ptr) net->delta_gpu = net->delta_gpu.cln(net->delta_gpu);
-        net->output_gpu = net->output_gpu.cln(net->output_gpu);
-        //net->truth_gpu = net->truth_gpu.cln(net->truth_gpu);
-        net->input_gpu = net->input_gpu.cln(net->input_gpu);
-        //net->workspace_gpu = net->workspace_gpu.cln(net->workspace_gpu);
-    }
-#endif
-}
-
-void clean_layer_moves_gpu(layer *l)
-{
-#ifdef GPU
-    //Clean ONLY by cln_mem_ext.cln() if *_gpu field calling inc, dec, add, rem function!
-    if (gpu_index >= 0) {
-        //l->indexes_gpu = l->indexes_gpu.cln(l->indexes_gpu);
-        //l->z_gpu = l->z_gpu.cln(l->z_gpu);
-        //l->r_gpu = l->r_gpu.cln(l->r_gpu);
-        //l->h_gpu = l->h_gpu.cln(l->h_gpu);
-        //l->temp_gpu = l->temp_gpu.cln(l->temp_gpu);
-        //l->temp2_gpu = l->temp2_gpu.cln(l->temp2_gpu);
-        //l->temp3_gpu = l->temp3_gpu.cln(l->temp3_gpu);
-        //l->dh_gpu = l->dh_gpu.cln(l->dh_gpu);
-        //l->hh_gpu = l->hh_gpu.cln(l->hh_gpu);
-        //l->prev_cell_gpu = l->prev_cell_gpu.cln(l->prev_cell_gpu);
-        l->cell_gpu = l->cell_gpu;
-        //l->f_gpu = l->f_gpu.cln(l->f_gpu);
-        //l->i_gpu = l->i_gpu.cln(l->i_gpu);
-        //l->g_gpu = l->g_gpu.cln(l->g_gpu);
-        //l->o_gpu = l->o_gpu.cln(l->o_gpu);
-        //l->c_gpu = l->c_gpu.cln(l->c_gpu);
-        //l->dc_gpu = l->dc_gpu.cln(l->dc_gpu);
-        //l->m_gpu = l->m_gpu.cln(l->m_gpu);
-        //l->v_gpu = l->v_gpu.cln(l->v_gpu);
-        //l->bias_m_gpu = l->bias_m_gpu.cln(l->bias_m_gpu);
-        //l->scale_m_gpu = l->scale_m_gpu.cln(l->scale_m_gpu);
-        //l->bias_v_gpu = l->bias_v_gpu.cln(l->bias_v_gpu);
-        //l->scale_v_gpu = l->scale_v_gpu.cln(l->scale_v_gpu);
-        //l->combine_gpu = l->combine_gpu.cln(l->combine_gpu);
-        //l->combine_delta_gpu = l->combine_delta_gpu.cln(l->combine_delta_gpu);
-        //l->prev_state_gpu = l->prev_state_gpu.cln(l->prev_state_gpu);
-        //l->forgot_state_gpu = l->forgot_state_gpu.cln(l->forgot_state_gpu);
-        //l->forgot_delta_gpu = l->forgot_delta_gpu.cln(l->forgot_delta_gpu);
-        l->state_gpu = cln(l->state_gpu);
-        //l->state_delta_gpu = l->state_delta_gpu.cln(l->state_delta_gpu);
-        //l->concat_gpu = l->concat_gpu.cln(l->concat_gpu);
-        //l->concat_delta_gpu = l->concat_delta_gpu.cln(l->concat_delta_gpu);
-        //l->binary_input_gpu = l->binary_input_gpu.cln(l->binary_input_gpu);
-        //l->binary_weights_gpu = l->binary_weights_gpu.cln(l->binary_weights_gpu);
-        //l->mean_gpu = l->mean_gpu.cln(l->mean_gpu);
-        //l->variance_gpu = l->variance_gpu.cln(l->variance_gpu);
-        //l->rolling_mean_gpu = l->rolling_mean_gpu.cln(l->rolling_mean_gpu);
-        //l->rolling_variance_gpu = l->rolling_variance_gpu.cln(l->rolling_variance_gpu);
-        //l->variance_delta_gpu = l->variance_delta_gpu.cln(l->variance_delta_gpu);
-        //l->mean_delta_gpu = l->mean_delta_gpu.cln(l->mean_delta_gpu);
-
-        if (l->x_gpu.ptr) l->x_gpu = l->x_gpu.cln(l->x_gpu);
-        if (l->x_norm_gpu.ptr) l->x_norm_gpu = l->x_norm_gpu.cln(l->x_norm_gpu);
-        //l->weights_gpu = l->weights_gpu.cln(l->weights_gpu);
-        //l->weight_updates_gpu = l->weight_updates_gpu.cln(l->weight_updates_gpu);
-        //l->weight_change_gpu = l->weight_change_gpu.cln(l->weight_change_gpu);
-        //l->biases_gpu = l->biases_gpu.cln(l->biases_gpu);
-        //l->bias_updates_gpu = l->bias_updates_gpu.cln(l->bias_updates_gpu);
-        //l->bias_change_gpu = l->bias_change_gpu.cln(l->bias_change_gpu);
-        //l->scales_gpu = l->scales_gpu.cln(l->scales_gpu);
-        //l->scale_updates_gpu = l->scale_updates_gpu.cln(l->scale_updates_gpu);
-        //l->scale_change_gpu = l->scale_change_gpu.cln(l->scale_change_gpu);
-        l->output_gpu = l->output_gpu.cln(l->output_gpu);
-        //l->loss_gpu = l->loss_gpu.cln(l->loss_gpu);
-        l->delta_gpu = l->delta_gpu.cln(l->delta_gpu);
-        //l->rand_gpu = l->rand_gpu.cln(l->rand_gpu);
-        //l->squared_gpu = l->squared_gpu.cln(l->squared_gpu);
-        //l->norms_gpu = l->norms_gpu.cln(l->norms_gpu);
-    }
-#endif
-}
 
 void forward_network(network *netp)
 {
 #ifdef GPU
 	if(gpu_index >= 0){
-        clean_network_moves_gpu(netp);
         forward_network_gpu(netp);
 		return;
 	}
@@ -348,7 +290,7 @@ void forward_network(network *netp)
 #ifdef BENCHMARK
         t = clock() - t;
 		double time_taken = ((double)t);
-		const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
+		const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "YOLO4", ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
 		printf("FW %s\t%d\n", layerName[(int)l.type], (int)time_taken);
 #endif
         net.input = l.output;
@@ -392,7 +334,7 @@ void update_network(network *netp)
 #ifdef BENCHMARK
         t = clock() - t;
 		double time_taken = ((double)t);
-		const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
+		const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "YOLO4", "ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
 		printf("UP %s\t%d\n", layerName[(int)l.type], (int)time_taken);
 #endif
         }
@@ -449,7 +391,7 @@ void backward_network(network *netp)
 #ifdef BENCHMARK
         t = clock() - t;
 		double time_taken = ((double)t);
-		const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
+		const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "YOLO4", "ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
 		printf("BW %s\t%d\n", layerName[(int)l.type], (int)time_taken);
 #endif
 	}
@@ -518,7 +460,7 @@ int resize_network(network *net, int w, int h)
 {
 #ifdef GPU
 	if (gpu_index >= 0) {
-		opencl_set_device(net->gpu_index);
+		opencl_set_device(net->gpui);
 	}
 	if (gpu_index >= 0) {
 		opencl_free(net->input_gpu);
@@ -552,6 +494,8 @@ int resize_network(network *net, int w, int h)
 			resize_region_layer(&l, w, h);
 		}else if(l.type == YOLO){
 			resize_yolo_layer(&l, w, h);
+        }else if(l.type == YOLO4){
+			resize_yolo4_layer(&l, w, h);
 		}else if(l.type == ROUTE){
 			resize_route_layer(&l, net);
 		}else if(l.type == SHORTCUT){
@@ -691,6 +635,9 @@ int num_detections(network *net, float thresh)
 		if(l.type == YOLO){
 			s += yolo_num_detections(l, thresh);
 		}
+		if(l.type == YOLO4){
+			s += yolo4_num_detections(l, thresh);
+		}
 		if(l.type == DETECTION || l.type == REGION){
 			s += l.w*l.h*l.n;
 		}
@@ -721,6 +668,10 @@ void fill_network_boxes(network *net, int w, int h, float thresh, float hier, in
 		layer l = net->layers[j];
 		if(l.type == YOLO){
 			int count = get_yolo_detections(l, w, h, net->w, net->h, thresh, map, relative, dets);
+			dets += count;
+		}
+		if(l.type == YOLO4){
+			int count = get_yolo4_detections(l, w, h, net->w, net->h, thresh, map, relative, dets, 1);
 			dets += count;
 		}
 		if(l.type == REGION){
@@ -914,12 +865,17 @@ void free_network(network *net)
 	if (net->delta) free(net->delta);
 	free(net->workspace);
 #endif
+    free(net->seen);
+    free(net->t);
+    free(net->cost);
+    free(net->cur_iteration);
+    free(net->total_bbox);
+    free(net->rewritten_bbox);
 	free(net);
 }
 
 // Some day...
 // ^ What the hell is this comment for?
-
 
 layer network_output_layer(network *net)
 {
@@ -950,7 +906,7 @@ float *network_output(network *net)
 void forward_network_gpu(network *netp)
 {
 	network net = *netp;
-	opencl_set_device(net.gpu_index);
+	opencl_set_device(net.gpui);
 	opencl_push_array(net.input_gpu, net.input, net.inputs*net.batch);
 	if(net.truth){
 		opencl_push_array(net.truth_gpu, net.truth, net.truths*net.batch);
@@ -960,7 +916,6 @@ void forward_network_gpu(network *netp)
 	for(i = 0; i < net.n; ++i){
 		net.index = i;
 		layer l = net.layers[i];
-        clean_layer_moves_gpu(&l);
 		if(l.delta_gpu.ptr){
 			fill_gpu(l.outputs * l.batch, 0, l.delta_gpu, 1);
 		}
@@ -972,7 +927,7 @@ void forward_network_gpu(network *netp)
 #ifdef BENCHMARK
 		t = clock() - t;
 		double time_taken = ((double)t);
-		const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
+		const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "YOLO4", "ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
 		printf("FW %s\t%d\n", layerName[(int)l.type], (int)time_taken);
 #endif
 		net.input_gpu = l.output_gpu;
@@ -991,11 +946,10 @@ void backward_network_gpu(network *netp)
 	int i;
 	network net = *netp;
 	network orig = net;
-	opencl_set_device(net.gpu_index);
+	opencl_set_device(net.gpui);
 	for(i = net.n-1; i >= 0; --i){
 		layer l = net.layers[i];
 		if(l.stopbackward) break;
-        clean_layer_moves_gpu(&l);
         if(i == 0){
 			net = orig;
 		}else{
@@ -1014,7 +968,7 @@ void backward_network_gpu(network *netp)
 #ifdef BENCHMARK
 		t = clock() - t;
 		double time_taken = ((double)t);
-		const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
+		const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "YOLO4", "ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
 		printf("BW %s\t%d\n", layerName[(int)l.type], (int)time_taken);
 #endif
 	}
@@ -1023,7 +977,7 @@ void backward_network_gpu(network *netp)
 void update_network_gpu(network *netp)
 {
 	network net = *netp;
-	opencl_set_device(net.gpu_index);
+	opencl_set_device(net.gpui);
 	int i;
 	update_args a = {0};
 	a.batch = net.batch*net.subdivisions;
@@ -1039,7 +993,6 @@ void update_network_gpu(network *netp)
 
 	for(i = 0; i < net.n; ++i){
 		layer l = net.layers[i];
-        clean_layer_moves_gpu(&l);
         if(l.update_gpu){
 #ifdef BENCHMARK
 			clock_t t;
@@ -1049,7 +1002,7 @@ void update_network_gpu(network *netp)
 #ifdef BENCHMARK
 			t = clock() - t;
 			double time_taken = ((double)t);
-			const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
+			const char* layerName[] = { "CONVOLUTIONAL","DECONVOLUTIONAL","CONNECTED", "MAXPOOL", "SOFTMAX", "DETECTION", "DROPOUT", "CROP", "ROUTE", "COST", "NORMALIZATION", "AVGPOOL", "LOCAL", "SHORTCUT", "ACTIVE", "RNN", "GRU", "LSTM", "CRNN", "BATCHNORM", "NETWORK", "XNOR", "REGION", "YOLO", "YOLO4", "ISEG", "REORG", "UPSAMPLE", "LOGXENT", "L2NORM", "BLANK"};
 			printf("UP %s\t%d\n", layerName[(int)l.type], (int)time_taken);
 #endif
 		}
@@ -1059,7 +1012,7 @@ void update_network_gpu(network *netp)
 void harmless_update_network_gpu(network *netp)
 {
 	network net = *netp;
-	opencl_set_device(net.gpu_index);
+	opencl_set_device(net.gpui);
 	int i;
 	for(i = 0; i < net.n; ++i){
 		layer l = net.layers[i];
@@ -1081,7 +1034,7 @@ void *train_thread(void *ptr)
 {
 	train_args args = *(train_args*)ptr;
 	free(ptr);
-	opencl_set_device(args.net->gpu_index);
+	opencl_set_device(args.net->gpui);
 	*args.err = train_network(args.net, args.d);
 	return 0;
 }
@@ -1135,17 +1088,17 @@ void pull_weights(layer l)
 		opencl_pull_array(l.weights_gpu, l.weight_updates, l.nweights);
 		if(l.scales) opencl_pull_array(l.scales_gpu, l.scale_updates, l.n);
 	} else if(l.type == CONNECTED){
-		opencl_pull_array(l.biases_gpu, l.bias_updates, l.outputs);
-		opencl_pull_array(l.weights_gpu, l.weight_updates, l.outputs*l.inputs);
+		opencl_pull_array(l.biases_gpu, l.biases, l.outputs);
+		opencl_pull_array(l.weights_gpu, l.weights, l.outputs*l.inputs);
 	}
 }
 
 void push_weights(layer l)
 {
 	if(l.type == CONVOLUTIONAL || l.type == DECONVOLUTIONAL){
-		opencl_push_array(l.biases_gpu, l.biases, l.n);
-		opencl_push_array(l.weights_gpu, l.weights, l.nweights);
-		if(l.scales) opencl_push_array(l.scales_gpu, l.scales, l.n);
+		opencl_push_array(l.biases_gpu, l.bias_updates, l.n);
+		opencl_push_array(l.weights_gpu, l.weight_updates, l.nweights);
+		if(l.scales) opencl_push_array(l.scales_gpu, l.scale_updates, l.n);
 	} else if(l.type == CONNECTED){
 		opencl_push_array(l.biases_gpu, l.biases, l.outputs);
 		opencl_push_array(l.weights_gpu, l.weights, l.outputs*l.inputs);
@@ -1256,14 +1209,14 @@ void sync_layer(network **nets, int n, int j)
 	layer base = net->layers[j];
 	scale_weights(base, 0);
 	for (i = 0; i < n; ++i) {
-		opencl_set_device(nets[i]->gpu_index);
+		opencl_set_device(nets[i]->gpui);
 		layer l = nets[i]->layers[j];
 		pull_weights(l);
 		merge_weights(l, base);
 	}
 	scale_weights(base, 1./n);
 	for (i = 0; i < n; ++i) {
-		opencl_set_device(nets[i]->gpu_index);
+		opencl_set_device(nets[i]->gpui);
 		layer l = nets[i]->layers[j];
 		distribute_weights(l, base);
 	}

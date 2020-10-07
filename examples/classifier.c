@@ -35,9 +35,6 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
         }
 #endif
         nets[i] = load_network(cfgfile, weightfile, clear);
-#ifdef GPU
-        nets[i]->gpu_index = i;
-#endif
         nets[i]->learning_rate *= ngpus;
     }
     srand(time(0));

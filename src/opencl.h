@@ -17,20 +17,6 @@
 #include <CL/cl_ext.h>
 #endif
 
-/*
-#if defined(cl_khr_fp64)
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#define DOUBLE_SUPPORT_AVAILABLE
-#elif defined(cl_amd_fp64)
-#pragma OPENCL EXTENSION cl_amd_fp64 : enable
-#define DOUBLE_SUPPORT_AVAILABLE
-#endif
-#if defined(DOUBLE_SUPPORT_AVAILABLE)
-//#define float double
-//#define cl_float cl_double
-#endif
-*/
-
 #include <math.h>
 
 #ifndef MIN
@@ -75,6 +61,7 @@ cl_mem_ext mov(cl_mem_ext buf, size_t len);
 cl_mem_ext add(cl_mem_ext buf, int inc, size_t len);
 cl_mem_ext rem(cl_mem_ext buf, int dec, size_t len);
 cl_mem_ext upd(cl_mem_ext buf, size_t len);
+cl_command_queue que();
 
 cl_context opencl_context;
 cl_command_queue* opencl_queues;
@@ -101,8 +88,6 @@ void gemm_kernel_release(void);
 void avgpool_kernel_release(void);
 void crop_kernel_release(void);
 void dropout_kernel_release(void);
-
-extern void test_kernel_gpu(int N, cl_mem_ext input, cl_mem_ext output, cl_mem_ext expected);
 
 typedef struct dim2_
 {
