@@ -23,6 +23,7 @@ extern void run_go(int argc, char **argv);
 extern void run_art(int argc, char **argv);
 extern void run_super(int argc, char **argv);
 extern void run_lsd(int argc, char **argv);
+extern void run_cgan(int argc, char **argv);
 
 void average(int argc, char *argv[])
 {
@@ -404,6 +405,8 @@ void visualize(char *cfgfile, char *weightfile)
 
 int main(int argc, char **argv)
 {
+    // ONLY HERE!!!
+    srand(27272727);
     //test_resize("data/bad.jpg");
     //test_box();
     //test_convolutional_layer();
@@ -455,6 +458,8 @@ int main(int argc, char **argv)
         run_super(argc, argv);
     } else if (0 == strcmp(argv[1], "lsd")){
         run_lsd(argc, argv);
+    } else if (0 == strcmp(argv[1], "cgan")){
+        run_cgan(argc, argv);
     } else if (0 == strcmp(argv[1], "detector")){
         run_detector(argc, argv);
     } else if (0 == strcmp(argv[1], "detect")){

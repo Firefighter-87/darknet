@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
       <config projectName="darknet" targetName="libdarknet_s" />
@@ -15,8 +18,6 @@
   <component name="ChangeListManager">
     <list default="true" id="5c1f2602-dc6e-4bd5-b03e-d07ee3b8a66f" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/blas_kernels.cl" beforeDir="false" afterPath="$PROJECT_DIR$/src/blas_kernels.cl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/demo.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/demo.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,27 +39,24 @@
   </component>
   <component name="PropertiesComponent">
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
+    <property name="OCFindUsagesOptions.isSearchForTextOccurrences" value="false" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.first.check.clang-format" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/cfg" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.Console Colors" />
+    <property name="settings.editor.selected.configurable" value="configurable.group.tools" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/cfg" />
       <recent name="$PROJECT_DIR$/src" />
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.bindarknet (tcifar)">
     <configuration name="Build All" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet" EXPLICIT_BUILD_TARGET_NAME="all">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -94,6 +92,11 @@
       </method>
     </configuration>
     <configuration name="bindarknet (Yv2Demo)" type="CMakeRunConfiguration" factoryName="Application" singleton="true" PROGRAM_PARAMS="detector demo cfg/coco.data cfg/yolov2.cfg ../../../weights/yolov2.weights -c 0 -i 1" REDIRECT_INPUT="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="bindarknet (Yv2) (Y4)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="detect cfg/yolov2y4-voc.cfg ../../../weights/yolov2-voc.weights data/dog.jpg -i 1" REDIRECT_INPUT="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -143,6 +146,16 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="bindarknet (cgan) (test) (backup)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="cgan test cfg/cgan.data cfg/gnet.cfg backup/gnet.backup data/gcifar/test/7_frog.png" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/cgan" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="bindarknet (cgan) (test)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="cgan test cfg/cgan.data cfg/gnet.cfg backup/gnet.weights data/gcifar/test/7_frog.png" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/cgan" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="bindarknet (cifar) (try1)" type="CMakeRunConfiguration" factoryName="Application" singleton="true" PROGRAM_PARAMS="classifier predict cfg/cifar.data cfg/cifar_small_test.cfg backup/cifar_small.weights data/cifar/test/6298_cat.png -i 1" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/cifar" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -178,6 +191,16 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="bindarknet (tYv2) (Y4)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="detector train voc1.data yolov2y4-voc.cfg darknet19_448.conv.23 -gpus 1,2" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/voc" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="bindarknet (tYv2) (cnt.) (Y4)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="detector train voc1.data yolov2y4-voc.cfg backup1/yolov2y4-voc.backup -gpus 1,2" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/voc" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="bindarknet (tYv2) (cnt.)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="detector train voc1.data yolov2-voc.cfg backup1/yolov2-voc.backup -gpus 1,2" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/voc" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -208,7 +231,17 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="bindarknet (tcifar) (d19)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="classifier train cfg/cifar.data cfg/darknet19.cfg -gpus 1,2" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/cifar" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
+    <configuration name="bindarknet (tcgan) (cnt.)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="cgan train cfg/cgan.data cfg/gnet.cfg backup/gnet.backup -gpus 1,2" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/cgan" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="bindarknet (tcgan)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="cgan train cfg/cgan.data cfg/gnet.cfg -gpus 1,2" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/cgan" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="bindarknet (tcifar) (d19)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="classifier train cfg/cifar.data cfg/darknet19.cfg -i 1" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/cifar" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -218,7 +251,7 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="bindarknet (tcifar)" type="CMakeRunConfiguration" factoryName="Application" singleton="true" PROGRAM_PARAMS="classifier train cfg/cifar.data cfg/cifar_small.cfg -gpus 2" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/cifar" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
+    <configuration name="bindarknet (tcifar)" type="CMakeRunConfiguration" factoryName="Application" singleton="true" PROGRAM_PARAMS="classifier train cfg/cifar.data cfg/cifar_small.cfg -gpus 1,2" REDIRECT_INPUT="false" WORKING_DIR="file://$USER_HOME$/cifar" PASS_PARENT_ENVS_2="true" PROJECT_NAME="darknet" TARGET_NAME="bindarknet" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="darknet" RUN_TARGET_NAME="bindarknet">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -233,11 +266,6 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="GradleAppRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <list>
       <item itemvalue="CMake Application.Build All" />
       <item itemvalue="CMake Application.bindarknet (Yv1Demo)" />
@@ -247,6 +275,7 @@
       <item itemvalue="CMake Application.bindarknet (Yv2Demo) (car_low) " />
       <item itemvalue="CMake Application.bindarknet (Yv2Demo) (car_night)" />
       <item itemvalue="CMake Application.bindarknet (Yv2Demo)" />
+      <item itemvalue="CMake Application.bindarknet (Yv2) (Y4)" />
       <item itemvalue="CMake Application.bindarknet (Yv2)" />
       <item itemvalue="CMake Application.bindarknet (Yv3-sppDemo)" />
       <item itemvalue="CMake Application.bindarknet (Yv3-spp)" />
@@ -256,22 +285,28 @@
       <item itemvalue="CMake Application.bindarknet (Yv4Demo) " />
       <item itemvalue="CMake Application.bindarknet (Yv4Demo) (car)" />
       <item itemvalue="CMake Application.bindarknet (Yv4)" />
-      <item itemvalue="CMake Application.bindarknet (cifar) (try1)" />
-      <item itemvalue="CMake Application.bindarknet (cifar) (try2)" />
-      <item itemvalue="CMake Application.bindarknet (cifar) (try3)" />
-      <item itemvalue="CMake Application.bindarknet (cifar) (try4)" />
-      <item itemvalue="CMake Application.bindarknet (cifar) (try5)" />
       <item itemvalue="CMake Application.bindarknet (tYv1) (cnt.)" />
       <item itemvalue="CMake Application.bindarknet (tYv1)" />
+      <item itemvalue="CMake Application.bindarknet (tYv2) (Y4)" />
+      <item itemvalue="CMake Application.bindarknet (tYv2) (cnt.) (Y4)" />
       <item itemvalue="CMake Application.bindarknet (tYv2) (cnt.)" />
       <item itemvalue="CMake Application.bindarknet (tYv2)" />
       <item itemvalue="CMake Application.bindarknet (tYv3) (cnt)" />
       <item itemvalue="CMake Application.bindarknet (tYv3)" />
       <item itemvalue="CMake Application.bindarknet (tYv4) (cnt)" />
       <item itemvalue="CMake Application.bindarknet (tYv4)" />
+      <item itemvalue="CMake Application.bindarknet (cifar) (try1)" />
+      <item itemvalue="CMake Application.bindarknet (cifar) (try2)" />
+      <item itemvalue="CMake Application.bindarknet (cifar) (try3)" />
+      <item itemvalue="CMake Application.bindarknet (cifar) (try4)" />
+      <item itemvalue="CMake Application.bindarknet (cifar) (try5)" />
       <item itemvalue="CMake Application.bindarknet (tcifar) (d19)" />
       <item itemvalue="CMake Application.bindarknet (tcifar) (valid)" />
       <item itemvalue="CMake Application.bindarknet (tcifar)" />
+      <item itemvalue="CMake Application.bindarknet (cgan) (test) (backup)" />
+      <item itemvalue="CMake Application.bindarknet (cgan) (test)" />
+      <item itemvalue="CMake Application.bindarknet (tcgan) (cnt.)" />
+      <item itemvalue="CMake Application.bindarknet (tcgan)" />
       <item itemvalue="CMake Application.libdarknet" />
       <item itemvalue="CMake Application.libdarknet_s" />
     </list>
@@ -511,6 +546,94 @@
       <workItem from="1602063456395" duration="175000" />
       <workItem from="1602063921470" duration="694000" />
       <workItem from="1602064686478" duration="470000" />
+      <workItem from="1602129189397" duration="1878000" />
+      <workItem from="1602244780641" duration="411000" />
+      <workItem from="1602245211700" duration="2214000" />
+      <workItem from="1602258175638" duration="9231000" />
+      <workItem from="1602289886747" duration="4322000" />
+      <workItem from="1602294364877" duration="108000" />
+      <workItem from="1602294574503" duration="6525000" />
+      <workItem from="1602305339804" duration="3085000" />
+      <workItem from="1602320612600" duration="148000" />
+      <workItem from="1602320768144" duration="3931000" />
+      <workItem from="1602324790095" duration="18000" />
+      <workItem from="1602324877611" duration="3772000" />
+      <workItem from="1602328789881" duration="18282000" />
+      <workItem from="1602347547025" duration="3130000" />
+      <workItem from="1602350796610" duration="11150000" />
+      <workItem from="1602372337018" duration="16527000" />
+      <workItem from="1602415040019" duration="25456000" />
+      <workItem from="1602489490427" duration="720000" />
+      <workItem from="1602517583599" duration="9261000" />
+      <workItem from="1602654730256" duration="658000" />
+      <workItem from="1602655698795" duration="3222000" />
+      <workItem from="1602778937517" duration="6116000" />
+      <workItem from="1602830594150" duration="1080000" />
+      <workItem from="1602831851620" duration="398000" />
+      <workItem from="1602834060639" duration="907000" />
+      <workItem from="1602865280099" duration="1709000" />
+      <workItem from="1602868806039" duration="568000" />
+      <workItem from="1602931841993" duration="1156000" />
+      <workItem from="1602942492101" duration="4152000" />
+      <workItem from="1602946661381" duration="221000" />
+      <workItem from="1602947112289" duration="1615000" />
+      <workItem from="1602950221449" duration="183000" />
+      <workItem from="1602950570519" duration="683000" />
+      <workItem from="1602991327262" duration="711000" />
+      <workItem from="1602992407361" duration="811000" />
+      <workItem from="1602993851245" duration="9034000" />
+      <workItem from="1603038361346" duration="10234000" />
+      <workItem from="1603119544273" duration="275000" />
+      <workItem from="1603127335358" duration="1218000" />
+      <workItem from="1603207204770" duration="391000" />
+      <workItem from="1603383530906" duration="7894000" />
+      <workItem from="1603533244448" duration="1118000" />
+      <workItem from="1603690100653" duration="2150000" />
+      <workItem from="1603693343119" duration="33000" />
+      <workItem from="1603693630122" duration="989000" />
+      <workItem from="1603858774794" duration="1750000" />
+      <workItem from="1603861421004" duration="322000" />
+      <workItem from="1603862164340" duration="6765000" />
+      <workItem from="1603909700783" duration="1189000" />
+      <workItem from="1603911426528" duration="717000" />
+      <workItem from="1603912826411" duration="12383000" />
+      <workItem from="1603965080437" duration="3169000" />
+      <workItem from="1603977016095" duration="796000" />
+      <workItem from="1603978062347" duration="9045000" />
+      <workItem from="1604148682892" duration="244000" />
+      <workItem from="1604149494007" duration="479000" />
+      <workItem from="1604149990289" duration="109000" />
+      <workItem from="1604150108822" duration="1274000" />
+      <workItem from="1604151786309" duration="125000" />
+      <workItem from="1604151920726" duration="1246000" />
+      <workItem from="1604160265308" duration="43000" />
+      <workItem from="1604160444169" duration="139000" />
+      <workItem from="1604160592662" duration="268000" />
+      <workItem from="1604161434463" duration="86000" />
+      <workItem from="1604161754128" duration="59000" />
+      <workItem from="1604161825173" duration="31000" />
+      <workItem from="1604161868988" duration="24000" />
+      <workItem from="1604161905498" duration="58000" />
+      <workItem from="1604233778733" duration="87000" />
+      <workItem from="1604234439825" duration="66000" />
+      <workItem from="1604235661862" duration="53000" />
+      <workItem from="1604236057039" duration="1518000" />
+      <workItem from="1604237588806" duration="13716000" />
+      <workItem from="1604263133329" duration="82000" />
+      <workItem from="1604263305908" duration="880000" />
+      <workItem from="1604264348791" duration="30934000" />
+      <workItem from="1604302602890" duration="345000" />
+      <workItem from="1604302962778" duration="69000" />
+      <workItem from="1604303043836" duration="5194000" />
+      <workItem from="1604290259545" duration="15961000" />
+      <workItem from="1604328553910" duration="97000" />
+      <workItem from="1604329053050" duration="85000" />
+      <workItem from="1604329231519" duration="49000" />
+      <workItem from="1604338073917" duration="333000" />
+      <workItem from="1604338660721" duration="276000" />
+      <workItem from="1604338945288" duration="125000" />
+      <workItem from="1604339197891" duration="16391000" />
+      <workItem from="1604384412465" duration="4429000" />
     </task>
     <servers />
   </component>
@@ -533,117 +656,128 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="398" y="198" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1602086288474">
-      <screen x="0" y="23" width="1920" height="1010" />
+    <state x="398" y="198" width="1758" height="549" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1604388669906">
+      <screen x="0" y="23" width="1920" height="1011" />
     </state>
-    <state x="398" y="198" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1920.1005@0.23.1920.1005" timestamp="1595576063698" />
-    <state x="398" y="198" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1920.1007@0.23.1920.1007" timestamp="1595619075939" />
     <state x="398" y="198" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1920.1008@0.23.1920.1008" timestamp="1596480886927" />
-    <state x="398" y="198" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1920.1010@0.23.1920.1010" timestamp="1602086288474" />
-    <state x="398" y="198" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1920.1011@0.23.1920.1011" timestamp="1601396587735" />
+    <state x="75" y="356" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1920.1009@0.23.1920.1009" timestamp="1602950392719" />
+    <state x="74" y="463" width="1758" height="549" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1920.1010@0.23.1920.1010" timestamp="1604340067238" />
+    <state x="398" y="198" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1920.1011@0.23.1920.1011" timestamp="1604388669906" />
     <state x="721" y="248" key="#com.intellij.ide.macro.MacrosDialog" timestamp="1601399462823">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
     <state x="721" y="248" key="#com.intellij.ide.macro.MacrosDialog/0.23.1920.1010@0.23.1920.1010" timestamp="1601399462823" />
-    <state x="648" y="268" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1595576256998">
-      <screen x="0" y="23" width="1920" height="1005" />
-    </state>
-    <state x="648" y="268" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/0.23.1920.1005@0.23.1920.1005" timestamp="1595576256998" />
     <state x="711" y="426" key="ANALYSIS_DLG_com.intellij.analysis.BaseAnalysisAction$1" timestamp="1601297935696">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
     <state x="711" y="426" key="ANALYSIS_DLG_com.intellij.analysis.BaseAnalysisAction$1/0.23.1920.1010@0.23.1920.1010" timestamp="1601297935696" />
-    <state x="0" y="23" width="1920" height="1009" key="CommitChangelistDialog2" timestamp="1601619966860">
+    <state x="0" y="23" width="1920" height="1009" key="CommitChangelistDialog2" timestamp="1604339052220">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state x="0" y="23" width="1920" height="1009" key="CommitChangelistDialog2/0.23.1920.1010@0.23.1920.1010" timestamp="1601619966860" />
+    <state x="0" y="23" width="1920" height="1009" key="CommitChangelistDialog2/0.23.1920.1010@0.23.1920.1010" timestamp="1604339052220" />
     <state x="0" y="23" key="CommitChangelistDialog2/0.23.1920.1011@0.23.1920.1011" timestamp="1601047667400" />
-    <state width="458" height="466" key="DebuggerActiveHint" timestamp="1601565621523">
+    <state width="600" height="466" key="DebuggerActiveHint" timestamp="1604254277718">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state width="458" height="466" key="DebuggerActiveHint/0.23.1920.1010@0.23.1920.1010" timestamp="1601565621523" />
-    <state width="458" height="466" key="DebuggerActiveHint/0.23.1920.1011@0.23.1920.1011" timestamp="1601040026344" />
-    <state x="192" y="112" key="DiffContextDialog" timestamp="1601619964753">
+    <state width="600" height="466" key="DebuggerActiveHint/0.23.1920.1010@0.23.1920.1010" timestamp="1604254277718" />
+    <state width="458" height="466" key="DebuggerActiveHint/0.23.1920.1011@0.23.1920.1011" timestamp="1602352050925" />
+    <state x="192" y="112" key="DiffContextDialog" timestamp="1604339009448">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state x="192" y="112" key="DiffContextDialog/0.23.1920.1010@0.23.1920.1010" timestamp="1601619964753" />
+    <state x="192" y="112" key="DiffContextDialog/0.23.1920.1010@0.23.1920.1010" timestamp="1604339009448" />
     <state x="192" y="112" key="DiffContextDialog/0.23.1920.1011@0.23.1920.1011" timestamp="1601047665828" />
-    <state width="1878" height="353" key="GridCell.Tab.0.bottom" timestamp="1602089210532">
+    <state width="1878" height="268" key="GridCell.Tab.0.bottom" timestamp="1604431690685">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state width="1878" height="572" key="GridCell.Tab.0.bottom/0.23.1920.1005@0.23.1920.1005" timestamp="1595576275380" />
-    <state width="1878" height="244" key="GridCell.Tab.0.bottom/0.23.1920.1007@0.23.1920.1007" timestamp="1595620365553" />
+    <state width="1878" height="391" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1602090046477" />
     <state width="1878" height="244" key="GridCell.Tab.0.bottom/0.23.1920.1008@0.23.1920.1008" timestamp="1596364449613" />
-    <state width="1878" height="353" key="GridCell.Tab.0.bottom/0.23.1920.1010@0.23.1920.1010" timestamp="1602089210532" />
-    <state width="1878" height="282" key="GridCell.Tab.0.bottom/0.23.1920.1011@0.23.1920.1011" timestamp="1602064672550" />
-    <state width="1878" height="353" key="GridCell.Tab.0.center" timestamp="1602089210532">
+    <state width="1878" height="349" key="GridCell.Tab.0.bottom/0.23.1920.1009@0.23.1920.1009" timestamp="1602950404225" />
+    <state width="1878" height="268" key="GridCell.Tab.0.bottom/0.23.1920.1010@0.23.1920.1010" timestamp="1604431690685" />
+    <state width="1878" height="268" key="GridCell.Tab.0.bottom/0.23.1920.1011@0.23.1920.1011" timestamp="1604327445975" />
+    <state width="1878" height="268" key="GridCell.Tab.0.center" timestamp="1604431690684">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state width="1878" height="572" key="GridCell.Tab.0.center/0.23.1920.1005@0.23.1920.1005" timestamp="1595576275380" />
-    <state width="1878" height="244" key="GridCell.Tab.0.center/0.23.1920.1007@0.23.1920.1007" timestamp="1595620365552" />
+    <state width="1878" height="391" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1602090046476" />
     <state width="1878" height="244" key="GridCell.Tab.0.center/0.23.1920.1008@0.23.1920.1008" timestamp="1596364449613" />
-    <state width="1878" height="353" key="GridCell.Tab.0.center/0.23.1920.1010@0.23.1920.1010" timestamp="1602089210532" />
-    <state width="1878" height="282" key="GridCell.Tab.0.center/0.23.1920.1011@0.23.1920.1011" timestamp="1602064672549" />
-    <state width="1878" height="353" key="GridCell.Tab.0.left" timestamp="1602089210532">
+    <state width="1878" height="349" key="GridCell.Tab.0.center/0.23.1920.1009@0.23.1920.1009" timestamp="1602950404225" />
+    <state width="1878" height="268" key="GridCell.Tab.0.center/0.23.1920.1010@0.23.1920.1010" timestamp="1604431690684" />
+    <state width="1878" height="268" key="GridCell.Tab.0.center/0.23.1920.1011@0.23.1920.1011" timestamp="1604327445975" />
+    <state width="1878" height="268" key="GridCell.Tab.0.left" timestamp="1604431690684">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state width="1878" height="572" key="GridCell.Tab.0.left/0.23.1920.1005@0.23.1920.1005" timestamp="1595576275380" />
-    <state width="1878" height="244" key="GridCell.Tab.0.left/0.23.1920.1007@0.23.1920.1007" timestamp="1595620365552" />
+    <state width="1878" height="391" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1602090046473" />
     <state width="1878" height="244" key="GridCell.Tab.0.left/0.23.1920.1008@0.23.1920.1008" timestamp="1596364449612" />
-    <state width="1878" height="353" key="GridCell.Tab.0.left/0.23.1920.1010@0.23.1920.1010" timestamp="1602089210532" />
-    <state width="1878" height="282" key="GridCell.Tab.0.left/0.23.1920.1011@0.23.1920.1011" timestamp="1602064672549" />
-    <state width="1878" height="353" key="GridCell.Tab.0.right" timestamp="1602089210532">
+    <state width="1878" height="349" key="GridCell.Tab.0.left/0.23.1920.1009@0.23.1920.1009" timestamp="1602950404225" />
+    <state width="1878" height="268" key="GridCell.Tab.0.left/0.23.1920.1010@0.23.1920.1010" timestamp="1604431690684" />
+    <state width="1878" height="268" key="GridCell.Tab.0.left/0.23.1920.1011@0.23.1920.1011" timestamp="1604327445974" />
+    <state width="1878" height="268" key="GridCell.Tab.0.right" timestamp="1604431690685">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state width="1878" height="572" key="GridCell.Tab.0.right/0.23.1920.1005@0.23.1920.1005" timestamp="1595576275380" />
-    <state width="1878" height="244" key="GridCell.Tab.0.right/0.23.1920.1007@0.23.1920.1007" timestamp="1595620365552" />
+    <state width="1878" height="391" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1602090046476" />
     <state width="1878" height="244" key="GridCell.Tab.0.right/0.23.1920.1008@0.23.1920.1008" timestamp="1596364449613" />
-    <state width="1878" height="353" key="GridCell.Tab.0.right/0.23.1920.1010@0.23.1920.1010" timestamp="1602089210532" />
-    <state width="1878" height="282" key="GridCell.Tab.0.right/0.23.1920.1011@0.23.1920.1011" timestamp="1602064672549" />
-    <state width="1878" height="282" key="GridCell.Tab.1.bottom" timestamp="1602088583481">
+    <state width="1878" height="349" key="GridCell.Tab.0.right/0.23.1920.1009@0.23.1920.1009" timestamp="1602950404225" />
+    <state width="1878" height="268" key="GridCell.Tab.0.right/0.23.1920.1010@0.23.1920.1010" timestamp="1604431690685" />
+    <state width="1878" height="268" key="GridCell.Tab.0.right/0.23.1920.1011@0.23.1920.1011" timestamp="1604327445975" />
+    <state width="1878" height="303" key="GridCell.Tab.1.bottom" timestamp="1604384268041">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state width="1878" height="282" key="GridCell.Tab.1.bottom/0.23.1920.1010@0.23.1920.1010" timestamp="1602088583481" />
-    <state width="1878" height="282" key="GridCell.Tab.1.bottom/0.23.1920.1011@0.23.1920.1011" timestamp="1602088430580" />
-    <state width="1878" height="282" key="GridCell.Tab.1.center" timestamp="1602088583481">
+    <state width="1878" height="416" key="GridCell.Tab.1.bottom/0.23.1920.1009@0.23.1920.1009" timestamp="1602948731429" />
+    <state width="1878" height="303" key="GridCell.Tab.1.bottom/0.23.1920.1010@0.23.1920.1010" timestamp="1604384268041" />
+    <state width="1878" height="417" key="GridCell.Tab.1.bottom/0.23.1920.1011@0.23.1920.1011" timestamp="1602411451847" />
+    <state width="1878" height="303" key="GridCell.Tab.1.center" timestamp="1604384268041">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state width="1878" height="282" key="GridCell.Tab.1.center/0.23.1920.1010@0.23.1920.1010" timestamp="1602088583481" />
-    <state width="1878" height="282" key="GridCell.Tab.1.center/0.23.1920.1011@0.23.1920.1011" timestamp="1602088430579" />
-    <state width="1878" height="282" key="GridCell.Tab.1.left" timestamp="1602088583481">
+    <state width="1878" height="416" key="GridCell.Tab.1.center/0.23.1920.1009@0.23.1920.1009" timestamp="1602948731429" />
+    <state width="1878" height="303" key="GridCell.Tab.1.center/0.23.1920.1010@0.23.1920.1010" timestamp="1604384268041" />
+    <state width="1878" height="417" key="GridCell.Tab.1.center/0.23.1920.1011@0.23.1920.1011" timestamp="1602411451847" />
+    <state width="1878" height="303" key="GridCell.Tab.1.left" timestamp="1604384268041">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state width="1878" height="282" key="GridCell.Tab.1.left/0.23.1920.1010@0.23.1920.1010" timestamp="1602088583481" />
-    <state width="1878" height="282" key="GridCell.Tab.1.left/0.23.1920.1011@0.23.1920.1011" timestamp="1602088430579" />
-    <state width="1878" height="282" key="GridCell.Tab.1.right" timestamp="1602088583481">
+    <state width="1878" height="416" key="GridCell.Tab.1.left/0.23.1920.1009@0.23.1920.1009" timestamp="1602948731429" />
+    <state width="1878" height="303" key="GridCell.Tab.1.left/0.23.1920.1010@0.23.1920.1010" timestamp="1604384268041" />
+    <state width="1878" height="417" key="GridCell.Tab.1.left/0.23.1920.1011@0.23.1920.1011" timestamp="1602411451847" />
+    <state width="1878" height="303" key="GridCell.Tab.1.right" timestamp="1604384268041">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state width="1878" height="282" key="GridCell.Tab.1.right/0.23.1920.1010@0.23.1920.1010" timestamp="1602088583481" />
-    <state width="1878" height="282" key="GridCell.Tab.1.right/0.23.1920.1011@0.23.1920.1011" timestamp="1602088430579" />
-    <state x="770" y="237" key="RollbackChangesDialog" timestamp="1601402136420">
+    <state width="1878" height="416" key="GridCell.Tab.1.right/0.23.1920.1009@0.23.1920.1009" timestamp="1602948731429" />
+    <state width="1878" height="303" key="GridCell.Tab.1.right/0.23.1920.1010@0.23.1920.1010" timestamp="1604384268041" />
+    <state width="1878" height="417" key="GridCell.Tab.1.right/0.23.1920.1011@0.23.1920.1011" timestamp="1602411451847" />
+    <state x="770" y="237" key="RollbackChangesDialog" timestamp="1604327989866">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state x="770" y="237" key="RollbackChangesDialog/0.23.1920.1010@0.23.1920.1010" timestamp="1601402136420" />
+    <state x="770" y="237" key="RollbackChangesDialog/0.23.1920.1010@0.23.1920.1010" timestamp="1604327989866" />
+    <state x="469" y="167" key="SettingsEditor" timestamp="1603046584676">
+      <screen x="0" y="23" width="1920" height="1010" />
+    </state>
+    <state x="469" y="167" key="SettingsEditor/0.23.1920.1010@0.23.1920.1010" timestamp="1603046584676" />
     <state x="508" y="264" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1601277766977">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
     <state x="508" y="264" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2/0.23.1920.1010@0.23.1920.1010" timestamp="1601277766977" />
-    <state x="926" y="355" width="938" height="582" key="find.popup" timestamp="1602088109230">
+    <state x="981" y="446" width="938" height="582" key="find.popup" timestamp="1604345251736">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state x="926" y="355" width="938" height="582" key="find.popup/0.23.1920.1010@0.23.1920.1010" timestamp="1602088109230" />
+    <state x="926" y="355" width="938" height="623" key="find.popup/0.0.1920.1080@0.0.1920.1080" timestamp="1602089677084" />
+    <state x="981" y="446" width="938" height="582" key="find.popup/0.23.1920.1010@0.23.1920.1010" timestamp="1604345251736" />
     <state x="734" y="279" width="938" height="577" key="find.popup/0.23.1920.1011@0.23.1920.1011" timestamp="1601573891757" />
-    <state x="688" y="320" key="refactoring.ChangeSignatureDialog" timestamp="1601142571508">
+    <state x="688" y="320" width="544" height="398" key="refactoring.ChangeSignatureDialog" timestamp="1604282905467">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state x="688" y="320" key="refactoring.ChangeSignatureDialog/0.23.1920.1010@0.23.1920.1010" timestamp="1601142571508" />
-    <state x="625" y="246" width="670" height="676" key="search.everywhere.popup" timestamp="1601464314971">
+    <state x="688" y="320" width="544" height="398" key="refactoring.ChangeSignatureDialog/0.23.1920.1010@0.23.1920.1010" timestamp="1604282905467" />
+    <state x="625" y="246" width="670" height="676" key="search.everywhere.popup" timestamp="1604327000365">
       <screen x="0" y="23" width="1920" height="1010" />
     </state>
-    <state x="625" y="246" width="670" height="676" key="search.everywhere.popup/0.23.1920.1010@0.23.1920.1010" timestamp="1601464314971" />
+    <state x="625" y="246" width="670" height="676" key="search.everywhere.popup/0.23.1920.1010@0.23.1920.1010" timestamp="1604327000365" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/network.c</url>
+          <line>778</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">

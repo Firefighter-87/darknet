@@ -910,6 +910,7 @@ void backward_network_gpu(network *net);
 void update_network_gpu(network *net);
 
 float train_networks(network **nets, int n, data d, int interval, int* gpus, int ngpus);
+float train_networks_cgan(network **nets, int n, data d, data o, int interval, int* gpus, int ngpus);
 void sync_nets(network **nets, int n, int interval);
 void harmless_update_network_gpu(network *net);
 #endif
@@ -931,6 +932,7 @@ void scale_matrix(matrix m, float scale);
 matrix csv_to_matrix(char *filename);
 float *network_accuracies(network *net, data d, int n);
 float train_network_datum(network *net);
+float train_network_datum_cgan(network *net, data d, data o, int i);
 image make_random_image(int w, int h, int c);
 
 void denormalize_connected_layer(layer l);
@@ -997,6 +999,7 @@ size_t get_current_batch(network *net);
 void constrain_image(image im);
 image get_network_image_layer(network *net, int i);
 layer get_network_output_layer(network *net);
+layer get_network_output_layer_cgan(network *net);
 void top_predictions(network *net, int n, int *index);
 void flip_image(image a);
 image float_to_image(int w, int h, int c, float *data);
@@ -1046,6 +1049,7 @@ image get_image_from_stream(CvCapture *cap);
 #endif
 void free_image(image m);
 float train_network(network *net, data d);
+float train_network_cgan(network *net, data d, data o);
 pthread_t load_data_in_thread(load_args args);
 void load_data_blocking(load_args args);
 list *get_paths(char *filename);

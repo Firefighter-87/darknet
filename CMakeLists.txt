@@ -142,6 +142,7 @@ set (DARKNET_SOURCES
     "src/local_layer.c"
     "src/lstm_layer.c"
     "examples/lsd.c"
+    "examples/cgan.c"
     "src/matrix.c"
     "src/maxpool_layer.c"
     "src/network.c"

@@ -408,6 +408,46 @@ float train_network_datum(network *net)
 	return error;
 }
 
+float train_network_datum_cgan(network *net, data d, data o, int i)
+{
+    int batch = net->batch;
+    int n = d.X.rows / batch;
+
+    assert(batch == 1);
+
+    float error = 0;
+
+    *net->seen += net->batch;
+    net->train = 1;
+
+    data p;
+
+    if (*net->seen % 2 == 0) {
+        p = copy_data(d);
+        get_next_batch(d, batch, i*batch, net->input, net->truth);
+    }
+    else {
+        p = copy_data(o);
+        get_next_batch(o, batch, i*batch, net->input, net->truth);
+    }
+    forward_network(net);
+
+    layer lout = get_network_output_layer_cgan(net);
+
+    assert(net->inputs == net->outputs);
+    get_next_batch(p, batch, i*batch, net->output, 0);
+    opencl_push_array(net->output_gpu, net->output, lout.outputs*lout.batch);
+
+    backward_network(net);
+
+    error += *net->cost;
+    if((*net->seen) % 32 == 0) update_network(net);
+
+    free_data(p);
+
+    return error;
+}
+
 float train_network_sgd(network *net, data d, int n)
 {
 	int batch = net->batch;
@@ -436,6 +476,23 @@ float train_network(network *net, data d)
 		sum += err;
 	}
 	return sum / (n * batch);
+}
+
+float train_network_cgan(network *net, data d, data o)
+{
+    assert(d.X.rows % net->batch == 0);
+    assert(o.X.rows % net->batch == 0);
+    int batch = net->batch;
+    int n = d.X.rows / batch;
+
+    int i;
+    float sum = 0;
+    for(i = 0; i < n; ++i){
+        float err = 0;
+        err += train_network_datum_cgan(net, d, o, i);
+        sum += err / 2.0f;
+    }
+    return sum / (n * batch);
 }
 
 void set_temp_network(network *net, float t)
@@ -484,7 +541,8 @@ int resize_network(network *net, int w, int h)
 	//fflush(stderr);
 	for (i = 0; i < net->n; ++i){
 		layer l = net->layers[i];
-		if(l.type == CONVOLUTIONAL){
+		if(l.type == CONVOLUTIONAL ||
+		   l.type == DECONVOLUTIONAL){
 			resize_convolutional_layer(&l, w, h);
 		}else if(l.type == CROP){
 			resize_crop_layer(&l, w, h);
@@ -822,6 +880,15 @@ float *network_accuracies(network *net, data d, int n)
 	return acc;
 }
 
+layer get_network_output_layer_cgan(network *net)
+{
+    int i, c;
+    for(i = net->n-1, c = 0; i >= 0; --i){
+        if(c++ > 0 && net->layers[i].type == CONVOLUTIONAL) break;
+    }
+    return net->layers[i];
+}
+
 layer get_network_output_layer(network *net)
 {
 	int i;
@@ -1025,6 +1092,7 @@ void harmless_update_network_gpu(network *netp)
 typedef struct {
 	network *net;
 	data d;
+	data o;
 	float *err;
 	int *gpus;
 	int ngpus;
@@ -1039,6 +1107,15 @@ void *train_thread(void *ptr)
 	return 0;
 }
 
+void *train_thread_cgan(void *ptr)
+{
+    train_args args = *(train_args*)ptr;
+    free(ptr);
+    opencl_set_device(args.net->gpui);
+    *args.err = train_network_cgan(args.net, args.d, args.o);
+    return 0;
+}
+
 pthread_t train_network_in_thread(network *net, data d, float *err, int *gpus, int ngpus)
 {
 	pthread_t thread;
@@ -1050,6 +1127,20 @@ pthread_t train_network_in_thread(network *net, data d, float *err, int *gpus, i
 	ptr->ngpus = ngpus;
 	if(pthread_create(&thread, 0, train_thread, ptr)) error("Thread creation failed");
 	return thread;
+}
+
+pthread_t train_network_in_thread_cgan(network *net, data d, data o, float *err, int *gpus, int ngpus)
+{
+    pthread_t thread;
+    train_args *ptr = (train_args *)calloc(1, sizeof(train_args));
+    ptr->net = net;
+    ptr->d = d;
+    ptr->o = o;
+    ptr->err = err;
+    ptr->gpus = gpus;
+    ptr->ngpus = ngpus;
+    if(pthread_create(&thread, 0, train_thread_cgan, ptr)) error("Thread creation failed");
+    return thread;
 }
 
 void merge_weights(layer l, layer base)
@@ -1297,6 +1388,41 @@ float train_networks(network **nets, int n, data d, int interval, int* gpus, int
 	free(threads);
 	free(errors);
 	return sum / (n);
+}
+
+float train_networks_cgan(network **nets, int n, data d, data o, int interval, int* gpus, int ngpus)
+{
+    assert(gpus);
+    int i;
+    int batch = nets[0]->batch;
+    int subdivisions = nets[0]->subdivisions;
+    assert(batch * subdivisions * n == d.X.rows);
+    assert(batch * subdivisions * n == o.X.rows);
+    pthread_t *threads = (pthread_t *) calloc(n, sizeof(pthread_t));
+    float *errors = (float *) calloc(n, sizeof(float));
+
+    float sum = 0;
+    for(i = 0; i < n; ++i){
+        data p = get_data_part(d, i, n);
+        data r = get_data_part(o, i, n);
+        threads[i] = train_network_in_thread_cgan(nets[i], p, r, errors + i, gpus, ngpus);
+    }
+    for(i = 0; i < n; ++i){
+        pthread_join(threads[i], 0);
+        //printf("%f\n", errors[i]);
+        sum += errors[i];
+    }
+    //cudaDeviceSynchronize();
+    if (get_current_batch(nets[0]) % interval == 0) {
+        printf("Syncing... ");
+        fflush(stdout);
+        sync_nets(nets, n, interval);
+        printf("Done!\n");
+    }
+    //cudaDeviceSynchronize();
+    free(threads);
+    free(errors);
+    return sum / (n);
 }
 
 void pull_network_output(network *net)

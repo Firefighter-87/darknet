@@ -22,7 +22,7 @@ void forward_deconvolutional_layer_gpu(layer l, network net)
         cl_mem_ext b = net.input_gpu; // + i*l.c*l.h*l.w;
         cl_mem_ext c = net.workspace_gpu;
 
-        gemm_offset_gpu(0,1,m,n,k,1,a,0,m,b,i*l.c*l.h*l.w,n,0,c,0,n);
+        gemm_offset_gpu(1,0,m,n,k,1,a,0,m,b,i*l.c*l.h*l.w,n,0,c,0,n);
 
         col2im_gpu(net.workspace_gpu.mem, i*l.outputs, l.out_c, l.out_h, l.out_w, l.size, l.stride, l.pad, l.output_gpu.mem);
     }
@@ -58,10 +58,9 @@ void backward_deconvolutional_layer_gpu(layer l, network net)
         cl_mem_ext bi = net.workspace_gpu;
         cl_mem_ext ci = l.weight_updates_gpu;
 
-        im2col_gpu(l.delta_gpu.add(l.delta_gpu, i*l.outputs, l.outputs).mem, 0, l.out_c, l.out_h, l.out_w,
-                   l.size, l.stride, l.pad, bi.mem);
+        im2col_gpu(l.delta_gpu.mem, i*l.outputs, l.out_c, l.out_h, l.out_w, l.size, l.stride, l.pad, bi.mem);
 
-        gemm_offset_gpu(1,0,mi,ni,ki,1,ai,i*mi*ki,ki,bi,0,ki,1,ci,0,ni);
+        gemm_offset_gpu(0,1,mi,ni,ki,1,ai,i*mi*ki,ki,bi,0,ki,1,ci,0,ni);
 
         if(net.delta_gpu.ptr){
             int md = l.c;
