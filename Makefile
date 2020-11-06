@@ -36,7 +36,7 @@ AR=ar
 ARFLAGS=rcs
 OPTS=
 COMMON= -Iinclude/ -Isrc/
-CFLAGS=-Wall -Wno-unknown-pragmas -Wno-unused-variable -Wno-unused-result -Wfatal-errors -fPIC
+CFLAGS=-Wall -Wno-stringop-overflow -Wno-unknown-pragmas -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-result -Wfatal-errors -fPIC
 
 ifeq ($(ARM), 1)
 LDFLAGS= -lm -lpthread
