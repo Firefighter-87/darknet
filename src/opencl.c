@@ -309,7 +309,7 @@ void opencl_load_buffer(const char *buffer, const size_t size, cl_program *outpu
 
     *output =
             clLinkProgram(opencl_context, opencl_device_ct_t, opencl_devices,
-                          "-cl-denorms-are-zero", 1, prog, NULL, NULL, &clErr);
+                          "", 1, prog, NULL, NULL, &clErr);
 
     if (clErr != CL_SUCCESS)
     {
