@@ -777,7 +777,10 @@ route_layer parse_route(list *options, size_params params, network *net)
     }
     int batch = params.batch;
 
-    route_layer layer = make_route_layer(batch, n, layers, sizes);
+    int groups = option_find_int_quiet(options, "groups", 1);
+    int group_id = option_find_int_quiet(options, "group_id", 0);
+
+    route_layer layer = make_route_layer(batch, n, layers, sizes, groups, group_id);
 
     convolutional_layer first = net->layers[layers[0]];
     layer.out_w = first.out_w;
